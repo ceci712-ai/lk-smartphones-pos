@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LK SmartPhone Tecno - Sistema POS</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printable-receipt, #printable-receipt * { visibility: visible; }
+      #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- Header / Navigation -->
+  <header class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-2">
+        <i data-lucide="smartphone" class="w-8 h-8 text-blue-400"></i>
+        <div>
+          <h1 class="text-xl font-bold leading-tight">LK SmartPhone Tecno</h1>
+          <p class="text-xs text-slate-400">Punto de Venta & Gestión de Inventario</p>
+        </div>
+      </div>
+      <nav class="flex gap-2 overflow-x-auto py-1">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn bg-blue-600 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-blue-500 transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+        </button>
+        <button onclick="switchTab('pos')" id="nav-pos" class="nav-btn bg-slate-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition">
+          <i data-lucide="shopping-cart" class="w-4 h-4"></i> POS / Ventas
+        </button>
+        <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn bg-slate-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition">
+          <i data-lucide="package" class="w-4 h-4"></i> Inventario
+        </button>
+        <button onclick="switchTab('repairs')" id="nav-repairs" class="nav-btn bg-slate-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition">
+          <i data-lucide="wrench" class="w-4 h-4"></i> Reparaciones
+        </button>
+        <button onclick="switchTab('history')" id="nav-history" class="nav-btn bg-slate-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition">
+          <i data-lucide="history" class="w-4 h-4"></i> Historial
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4">
+
+    <!-- 1. DASHBOARD -->
+    <section id="tab-dashboard" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Ventas de Hoy</p>
+            <h3 id="dash-today-sales" class="text-2xl font-bold text-slate-900">$0.00</h3>
+          </div>
+          <div class="p-3 bg-emerald-100 text-emerald-600 rounded-lg"><i data-lucide="dollar-sign"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Reparaciones Pendientes</p>
+            <h3 id="dash-pending-repairs" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+          <div class="p-3 bg-amber-100 text-amber-600 rounded-lg"><i data-lucide="wrench"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Productos Bajos en Stock</p>
+            <h3 id="dash-low-stock" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+          <div class="p-3 bg-red-100 text-red-600 rounded-lg"><i data-lucide="alert-triangle"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Total Productos</p>
+            <h3 id="dash-total-products" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+          <div class="p-3 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="layers"></i></div>
+        </div>
+      </div>
+
+      <!-- Quick Actions & Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2">
+            <i data-lucide="activity" class="text-blue-500"></i> Acciones Rápidas
+          </h2>
+          <div class="grid grid-cols-2 gap-4">
+            <button onclick="switchTab('pos')" class="p-4 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-left transition">
+              <i data-lucide="plus-circle" class="text-blue-600 mb-2"></i>
+              <p class="font-bold text-slate-800">Nueva Venta</p>
+              <p class="text-xs text-slate-500">Ir al punto de venta</p>
+            </button>
+            <button onclick="switchTab('repairs')" class="p-4 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 border border-slate-200 rounded-lg text-left transition">
+              <i data-lucide="file-plus" class="text-amber-600 mb-2"></i>
+              <p class="font-bold text-slate-800">Nueva Reparación</p>
+              <p class="text-xs text-slate-500">Ingresar un nuevo equipo</p>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-lg font-bold mb-4 text-slate-800">Últimas Ventas</h2>
+          <div id="dash-recent-sales" class="space-y-3 text-sm">
+            <p class="text-slate-400 italic">No hay ventas registradas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. POS / VENTAS -->
+    <section id="tab-pos" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Product Catalog Panel -->
+      <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+          <div class="relative w-full sm:w-72">
+            <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+            <input type="text" id="pos-search" oninput="renderPosProducts()" placeholder="Buscar por nombre, IMEI o código..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+          </div>
+          <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
+            <button onclick="filterPosCat('All')" class="pos-cat-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white">Todos</button>
+            <button onclick="filterPosCat('Teléfonos')" class="pos-cat-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Teléfonos</button>
+            <button onclick="filterPosCat('Accesorios')" class="pos-cat-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Accesorios</button>
+            <button onclick="filterPosCat('Vapeo')" class="pos-cat-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Vapeo</button>
+            <button onclick="filterPosCat('Misceláneos')" class="pos-cat-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Otros</button>
+          </div>
+        </div>
+
+        <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto pr-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Current Cart Panel -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <i data-lucide="shopping-bag" class="text-blue-600"></i> Carrito de Compra
+            </h2>
+            <button onclick="clearCart()" class="text-xs text-red-500 hover:underline">Vaciar</button>
+          </div>
+
+          <div id="cart-items" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            <p class="text-slate-400 text-center py-8 text-sm">El carrito está vacío</p>
+          </div>
+        </div>
+
+        <div class="border-t pt-4 mt-4 space-y-3">
+          <div class="flex justify-between text-sm text-slate-600">
+            <span>Subtotal:</span>
+            <span id="cart-subtotal">$0.00</span>
+          </div>
+          <div class="flex justify-between text-lg font-bold text-slate-900">
+            <span>Total:</span>
+            <span id="cart-total">$0.00</span>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-semibold text-slate-500">Método de Pago</label>
+            <select id="cart-payment-method" class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+            </select>
+          </div>
+
+          <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg shadow-md transition flex justify-center items-center gap-2">
+            <i data-lucide="check-circle"></i> Completar Venta
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. INVENTARIO -->
+    <section id="tab-inventory" class="hidden space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div class="flex gap-2">
+          <input type="text" id="inv-search" oninput="renderInventory()" placeholder="Buscar producto por nombre o código..." class="border border-slate-300 rounded-lg px-3 py-2 text-sm w-64">
+        </div>
+        <button onclick="openAddProductModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <i data-lucide="plus"></i> Agregar Producto
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs">
+              <th class="p-4">Producto</th>
+              <th class="p-4">Categoría</th>
+              <th class="p-4">Código / IMEI</th>
+              <th class="p-4">Precio</th>
+              <th class="p-4">Stock</th>
+              <th class="p-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-table-body" class="divide-y divide-slate-100">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. REPARACIONES -->
+    <section id="tab-repairs" class="hidden space-y-6">
+      <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="font-bold text-slate-800 text-lg">Control de Servicio Técnico</h2>
+        <button onclick="openAddRepairModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <i data-lucide="wrench"></i> Registrar Reparación
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="repairs-grid">
+        <!-- Dynamically populated -->
+      </div>
+    </section>
+
+    <!-- 5. HISTORIAL DE VENTAS -->
+    <section id="tab-history" class="hidden space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs">
+              <th class="p-4">ID Venta</th>
+              <th class="p-4">Fecha</th>
+              <th class="p-4">Items</th>
+              <th class="p-4">Método de Pago</th>
+              <th class="p-4">Total</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body" class="divide-y divide-slate-100">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: AGREGAR PRODUCTO -->
+  <div id="modal-product" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+      <h3 class="font-bold text-lg text-slate-800 border-b pb-2">Nuevo Producto</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block font-semibold mb-1">Nombre del Producto</label>
+          <input type="text" id="p-name" class="w-full border rounded-lg p-2">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold mb-1">Categoría</label>
+            <select id="p-cat" class="w-full border rounded-lg p-2">
+              <option value="Teléfonos">Teléfonos</option>
+              <option value="Accesorios">Accesorios</option>
+              <option value="Vapeo">Vapeo</option>
+              <option value="Misceláneos">Misceláneos</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Código / IMEI</label>
+            <input type="text" id="p-code" class="w-full border rounded-lg p-2">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold mb-1">Precio ($)</label>
+            <input type="number" step="0.01" id="p-price" class="w-full border rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Stock Inicial</label>
+            <input type="number" id="p-stock" class="w-full border rounded-lg p-2">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-product')" class="px-4 py-2 border rounded-lg text-slate-600">Cancelar</button>
+        <button onclick="saveProduct()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR REPARACIÓN -->
+  <div id="modal-repair" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+      <h3 class="font-bold text-lg text-slate-800 border-b pb-2">Registrar Orden de Servicio</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block font-semibold mb-1">Nombre del Cliente</label>
+          <input type="text" id="r-client" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Modelo del Equipo</label>
+          <input type="text" id="r-device" placeholder="ej. iPhone 12 Pro" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Falla / Detalles</label>
+          <textarea id="r-issue" rows="2" class="w-full border rounded-lg p-2"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold mb-1">Costo Estimado ($)</label>
+            <input type="number" step="0.01" id="r-cost" class="w-full border rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Estado</label>
+            <select id="r-status" class="w-full border rounded-lg p-2">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En Proceso">En Proceso</option>
+              <option value="Listo">Listo</option>
+              <option value="Entregado">Entregado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-repair')" class="px-4 py-2 border rounded-lg text-slate-600">Cancelar</button>
+        <button onclick="saveRepair()" class="px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold">Guardar Orden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL / AREA DE RECIBO DE IMPRESIÓN -->
+  <div id="modal-receipt" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-xs w-full p-6 text-center space-y-4">
+      <div id="printable-receipt" class="p-4 text-left font-mono text-xs text-slate-800 space-y-2">
+        <div class="text-center font-bold text-sm">
+          <p>LK SmartPhone Tecno</p>
+          <p class="text-[10px] font-normal">Teléfono, Vapeo & Servicio Técnico</p>
+          <p class="text-[10px] font-normal">--------------------------------</p>
+        </div>
+        <p>Fecha: <span id="rec-date"></span></p>
+        <p>Ticket #: <span id="rec-id"></span></p>
+        <p>--------------------------------</p>
+        <div id="rec-items" class="space-y-1"></div>
+        <p>--------------------------------</p>
+        <p class="flex justify-between font-bold"><span>TOTAL:</span><span id="rec-total"></span></p>
+        <p class="flex justify-between"><span>Pago:</span><span id="rec-method"></span></p>
+        <p class="text-center text-[10px] pt-4">¡Gracias por su compra!</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold">Imprimir</button>
+        <button onclick="closeModal('modal-receipt')" class="flex-1 border py-2 rounded-lg text-sm">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT DE LA APLICACIÓN -->
+  <script>
+    // Initial State & Local Storage Setup
+    let inventory = JSON.parse(localStorage.getItem('lk_inventory')) || [
+      { id: '1', name: 'iPhone 13 128GB', category: 'Teléfonos', code: 'IMEI-8839201', price: 650.00, stock: 3 },
+      { id: '2', name: 'Funda Silicona iPhone', category: 'Accesorios', code: 'ACC-001', price: 15.00, stock: 25 },
+      { id: '3', name: 'Vape Pod Starter Kit', category: 'Vapeo', code: 'VAP-102', price: 35.00, stock: 8 },
+      { id: '4', name: 'Cargador Carga Rápida 20W', category: 'Misceláneos', code: 'MIS-505', price: 20.00, stock: 12 }
+    ];
+
+    let repairs = JSON.parse(localStorage.getItem('lk_repairs')) || [
+      { id: 'R-101', client: 'Carlos Gómez', device: 'Samsung S21', issue: 'Cambio de Pantalla', cost: 95.00, status: 'En Proceso' }
+    ];
+
+    let sales = JSON.parse(localStorage.getItem('lk_sales')) || [];
+    let cart = [];
+    let activeCategory = 'All';
+
+    function saveData() {
+      localStorage.setItem('lk_inventory', JSON.stringify(inventory));
+      localStorage.setItem('lk_repairs', JSON.stringify(repairs));
+      localStorage.setItem('lk_sales', JSON.stringify(sales));
+    }
+
+    // Tab Switching Logic
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600');
+        btn.classList.add('bg-slate-800');
+      });
+      document.getElementById(`nav-${tabId}`).classList.remove('bg-slate-800');
+      document.getElementById(`nav-${tabId}`).classList.add('bg-blue-600');
+
+      if(tabId === 'dashboard') renderDashboard();
+      if(tabId === 'pos') renderPosProducts();
+      if(tabId === 'inventory') renderInventory();
+      if(tabId === 'repairs') renderRepairs();
+      if(tabId === 'history') renderHistory();
+    }
+
+    // --- POS LOGIC ---
+    function filterPosCat(cat) {
+      activeCategory = cat;
+      renderPosProducts();
+    }
+
+    function renderPosProducts() {
+      const query = document.getElementById('pos-search').value.toLowerCase();
+      const grid = document.getElementById('pos-products-grid');
+      grid.innerHTML = '';
+
+      const filtered = inventory.filter(p => {
+        const matchesCat = activeCategory === 'All' || p.category === activeCategory;
+        const matchesSearch = p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query);
+        return matchesCat && matchesSearch;
+      });
+
+      filtered.forEach(p => {
+        grid.innerHTML += `
+          <div onclick="addToCart('${p.id}')" class="bg-slate-50 border border-slate-200 rounded-lg p-3 cursor-pointer hover:border-blue-500 hover:shadow-md transition">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700 uppercase">${p.category}</span>
+            <h4 class="font-bold text-slate-800 text-sm mt-2 line-clamp-1">${p.name}</h4>
+            <p class="text-xs text-slate-400">Cod: ${p.code}</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-emerald-600">$${p.price.toFixed(2)}</span>
+              <span class="text-xs font-semibold ${p.stock < 3 ? 'text-red-500' : 'text-slate-500'}">Stock: ${p.stock}</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addToCart(productId) {
+      const prod = inventory.find(p => p.id === productId);
+      if(!prod || prod.stock <= 0) {
+        alert('Producto sin stock disponible');
+        return;
+      }
+
+      const itemInCart = cart.find(item => item.id === productId);
+      if(itemInCart) {
+        if(itemInCart.qty < prod.stock) {
+          itemInCart.qty++;
+        } else {
+          alert('Límite de stock alcanzado');
+        }
+      } else {
+        cart.push({ ...prod, qty: 1 });
+      }
+      renderCart();
+    }
+
+    function updateCartQty(id, delta) {
+      const item = cart.find(i => i.id === id);
+      const prod = inventory.find(p => p.id === id);
+      if(item) {
+        item.qty += delta;
+        if(item.qty > prod.stock) item.qty = prod.stock;
+        if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+      }
+      renderCart();
+    }
+
+    function clearCart() {
+      cart = [];
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items');
+      container.innerHTML = '';
+      let subtotal = 0;
+
+      if(cart.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-center py-8 text-sm">El carrito está vacío</p>`;
+      } else {
+        cart.forEach(item => {
+          subtotal += item.price * item.qty;
+          container.innerHTML += `
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg text-sm">
+              <div class="flex-1">
+                <p class="font-semibold text-slate-800 line-clamp-1">${item.name}</p>
+                <p class="text-xs text-slate-500">$${item.price.toFixed(2)} x ${item.qty}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 bg-slate-200 rounded font-bold">-</button>
+                <span>${item.qty}</span>
+                <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 bg-slate-200 rounded font-bold">+</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('cart-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('cart-total').innerText = `$${subtotal.toFixed(2)}`;
+    }
+
+    function processCheckout() {
+      if(cart.length === 0) return alert('El carrito está vacío');
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const method = document.getElementById('cart-payment-method').value;
+      const saleId = 'VEN-' + Math.floor(1000 + Math.random() * 9000);
+      const date = new Date().toLocaleString();
+
+      // Deduct stock
+      cart.forEach(cartItem => {
+        const prod = inventory.find(p => p.id === cartItem.id);
+        if(prod) prod.stock -= cartItem.qty;
+      });
+
+      // Add Sale
+      sales.unshift({
+        id: saleId,
+        date: date,
+        items: [...cart],
+        total: total,
+        method: method
+      });
+
+      saveData();
+
+      // Show Receipt Modal
+      document.getElementById('rec-id').innerText = saleId;
+      document.getElementById('rec-date').innerText = date;
+      document.getElementById('rec-method').innerText = method;
+      document.getElementById('rec-total').innerText = `$${total.toFixed(2)}`;
+
+      const recItems = document.getElementById('rec-items');
+      recItems.innerHTML = '';
+      cart.forEach(i => {
+        recItems.innerHTML += `
+          <div class="flex justify-between">
+            <span>${i.name} (x${i.qty})</span>
+            <span>$${(i.price * i.qty).toFixed(2)}</span>
+          </div>
+        `;
+      });
+
+      clearCart();
+      document.getElementById('modal-receipt').classList.remove('hidden');
+    }
+
+    // --- INVENTORY LOGIC ---
+    function renderInventory() {
+      const query = document.getElementById('inv-search').value.toLowerCase();
+      const tbody = document.getElementById('inventory-table-body');
+      tbody.innerHTML = '';
+
+      inventory.filter(p => p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query))
+        .forEach(p => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-4 font-semibold text-slate-800">${p.name}</td>
+              <td class="p-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs">${p.category}</span></td>
+              <td class="p-4 text-slate-500 font-mono text-xs">${p.code}</td>
+              <td class="p-4 font-bold text-emerald-600">$${p.price.toFixed(2)}</td>
+              <td class="p-4 font-bold ${p.stock < 3 ? 'text-red-500' : 'text-slate-700'}">${p.stock}</td>
+              <td class="p-4 text-center">
+                <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+      lucide.createIcons();
+    }
+
+    function openAddProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
+    function saveProduct() {
+      const name = document.getElementById('p-name').value;
+      const category = document.getElementById('p-cat').value;
+      const code = document.getElementById('p-code').value;
+      const price = parseFloat(document.getElementById('p-price').value);
+      const stock = parseInt(document.getElementById('p-stock').value);
+
+      if(!name || !price) return alert('Completa los campos obligatorios');
+
+      inventory.push({ id: Date.now().toString(), name, category, code, price, stock });
+      saveData();
+      closeModal('modal-product');
+      renderInventory();
+    }
+
+    function deleteProduct(id) {
+      if(confirm('¿Eliminar producto?')) {
+        inventory = inventory.filter(p => p.id !== id);
+        saveData();
+        renderInventory();
+      }
+    }
+
+    // --- REPAIRS LOGIC ---
+    function renderRepairs() {
+      const grid = document.getElementById('repairs-grid');
+      grid.innerHTML = '';
+
+      repairs.forEach(r => {
+        const statusColors = {
+          'Pendiente': 'bg-amber-100 text-amber-800',
+          'En Proceso': 'bg-blue-100 text-blue-800',
+          'Listo': 'bg-emerald-100 text-emerald-800',
+          'Entregado': 'bg-slate-100 text-slate-600'
+        };
+
+        grid.innerHTML += `
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-mono text-slate-400">${r.id}</span>
+                <h3 class="font-bold text-slate-800">${r.device}</h3>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full ${statusColors[r.status] || ''}">${r.status}</span>
+            </div>
+            <p class="text-xs text-slate-600"><span class="font-semibold">Cliente:</span> ${r.client}</p>
+            <p class="text-xs text-slate-600"><span class="font-semibold">Falla:</span> ${r.issue}</p>
+            <div class="flex justify-between items-center border-t pt-3">
+              <span class="font-bold text-emerald-600">$${r.cost.toFixed(2)}</span>
+              <select onchange="updateRepairStatus('${r.id}', this.value)" class="text-xs border rounded p-1">
+                <option value="Pendiente" ${r.status==='Pendiente'?'selected':''}>Pendiente</option>
+                <option value="En Proceso" ${r.status==='En Proceso'?'selected':''}>En Proceso</option>
+                <option value="Listo" ${r.status==='Listo'?'selected':''}>Listo</option>
+                <option value="Entregado" ${r.status==='Entregado'?'selected':''}>Entregado</option>
+              </select>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function openAddRepairModal() { document.getElementById('modal-repair').classList.remove('hidden'); }
+    function saveRepair() {
+      const client = document.getElementById('r-client').value;
+      const device = document.getElementById('r-device').value;
+      const issue = document.getElementById('r-issue').value;
+      const cost = parseFloat(document.getElementById('r-cost').value) || 0;
+      const status = document.getElementById('r-status').value;
+
+      if(!client || !device) return alert('Ingresa cliente y dispositivo');
+
+      repairs.unshift({ id: 'R-' + Math.floor(100 + Math.random() * 900), client, device, issue, cost, status });
+      saveData();
+      closeModal('modal-repair');
+      renderRepairs();
+    }
+
+    function updateRepairStatus(id, newStatus) {
+      const repair = repairs.find(r => r.id === id);
+      if(repair) {
+        repair.status = newStatus;
+        saveData();
+      }
+    }
+
+    // --- HISTORY LOGIC ---
+    function renderHistory() {
+      const tbody = document.getElementById('history-table-body');
+      tbody.innerHTML = '';
+
+      sales.forEach(s => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 font-mono font-bold text-blue-600">${s.id}</td>
+            <td class="p-4 text-xs text-slate-500">${s.date}</td>
+            <td class="p-4 text-xs">${s.items.map(i => `${i.name} (${i.qty})`).join(', ')}</td>
+            <td class="p-4 text-xs font-semibold">${s.method}</td>
+            <td class="p-4 font-bold text-emerald-600">$${s.total.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // --- DASHBOARD LOGIC ---
+    function renderDashboard() {
+      const totalSalesToday = sales.reduce((sum, s) => sum + s.total, 0);
+      const pendingRepairsCount = repairs.filter(r => r.status !== 'Entregado').length;
+      const lowStockCount = inventory.filter(p => p.stock < 3).length;
+
+      document.getElementById('dash-today-sales').innerText = `$${totalSalesToday.toFixed(2)}`;
+      document.getElementById('dash-pending-repairs').innerText = pendingRepairsCount;
+      document.getElementById('dash-low-stock').innerText = lowStockCount;
+      document.getElementById('dash-total-products').innerText = inventory.length;
+
+      const recentContainer = document.getElementById('dash-recent-sales');
+      recentContainer.innerHTML = '';
+      if(sales.length === 0) {
+        recentContainer.innerHTML = `<p class="text-slate-400 italic">No hay ventas registradas.</p>`;
+      } else {
+        sales.slice(0, 5).forEach(s => {
+          recentContainer.innerHTML += `
+            <div class="flex justify-between items-center border-b pb-2">
+              <div>
+                <p class="font-bold text-slate-800">${s.id}</p>
+                <p class="text-xs text-slate-400">${s.date}</p>
+              </div>
+              <span class="font-bold text-emerald-600">$${s.total.toFixed(2)}</span>
+            </div>
+          `;
+        });
+      }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // Initialize Icons & Dashboard
+    lucide.createIcons();
+    renderDashboard();
+  </script>
+</body>
+</html>
