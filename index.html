@@ -686,6 +686,47 @@
       </div>
     </div>
   </div>
+
+  // Configuración de Seguridad
+const ROLES = {
+  ADMIN_PIN: "9999",
+  STAFF_PIN: "1234"
+};
+
+let currentUserRole = null; // 'admin' o 'staff'
+
+function login() {
+  const pin = prompt("Ingrese su PIN de acceso:");
+  if (pin === ROLES.ADMIN_PIN) {
+    currentUserRole = 'admin';
+    alert("Bienvenido Administrador");
+    applyPermissions();
+  } else if (pin === ROLES.STAFF_PIN) {
+    currentUserRole = 'staff';
+    alert("Bienvenido Empleado");
+    applyPermissions();
+  } else {
+    alert("PIN Incorrecto");
+  }
+}
+
+function applyPermissions() {
+  if (currentUserRole === 'staff') {
+    // Ocultar pestañas sensibles para empleados
+    document.getElementById('nav-dashboard').style.display = 'none';
+    document.getElementById('nav-history').style.display = 'none';
+    
+    // Desactivar botones de eliminar en inventario
+    document.querySelectorAll('.btn-delete-product').forEach(btn => btn.style.display = 'none');
+    
+    // Redirigir directamente al POS
+    switchTab('pos');
+  } else {
+    // Mostrar todo al Administrador
+    document.getElementById('nav-dashboard').style.display = 'flex';
+    document.getElementById('nav-history').style.display = 'flex';
+  }
+}
   
     function deleteUser(id) {
       if(confirm('¿Eliminar acceso a este usuario?')) {
