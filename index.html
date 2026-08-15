@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LK SmartPhone Tecno - POS, Inventario & RRHH</title>
+  <title>LK SmartPhone Tecno - POS, Inventario, RRHH & WhatsApp</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -231,12 +231,12 @@
       </div>
     </section>
 
-    <!-- 4. REPARACIONES -->
+    <!-- 4. REPARACIONES & WHATSAPP AUTOMÁTICO -->
     <section id="tab-repairs" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
         <div>
           <h2 class="font-bold text-sm">Órdenes de Servicio Técnico</h2>
-          <p class="text-[11px] text-slate-400">Garantía de 45 días • Límite 7 días para retiro</p>
+          <p class="text-[11px] text-slate-400">Garantía de 45 días • Límite 7 días para retiro • Notificaciones WhatsApp</p>
         </div>
         <button onclick="openAddRepairModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
           <i data-lucide="wrench"></i> Nueva Reparación
@@ -273,7 +273,7 @@
       <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
         <div>
           <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina</h2>
-          <p class="text-[11px] text-slate-400">Fichas de empleados, identidades, registros de trabajo y bonos</p>
+          <p class="text-[11px] text-slate-400">Fichas de empleados, identidades, registros de trabajo y recibos de pago</p>
         </div>
         <button onclick="openInviteUserModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
           <i data-lucide="user-plus"></i> Registrar Empleado
@@ -364,8 +364,44 @@
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 border-t pt-3">
+      <div class="flex justify-between gap-2 border-t pt-3">
+        <button onclick="printPayrollVoucher()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante de Pago
+        </button>
         <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold">Guardar Cambios de Expediente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE IMPRESIÓN COMPROBANTE DE PAGO NÓMINA -->
+  <div id="modal-payroll-print" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+      <div id="printable-payroll" class="p-3 text-left font-mono text-[11px] text-slate-800 space-y-2">
+        <div class="text-center font-bold">
+          <p class="text-sm font-black"><span style="color:#ff007f">LK</span> SmartPhone Tecno</p>
+          <p class="text-[10px] font-normal text-slate-600">Comprobante de Pago de Nómina</p>
+          <p class="text-[9px] text-slate-400">------------------------------------</p>
+        </div>
+        <p>Fecha: <span id="pay-print-date"></span></p>
+        <p>Empleado: <span id="pay-print-name" class="font-bold"></span></p>
+        <p>Cargo: <span id="pay-print-role"></span></p>
+        <p class="text-[9px] text-slate-400">------------------------------------</p>
+        <p class="flex justify-between"><span>Días Trabajados:</span><span id="pay-print-days"></span></p>
+        <p class="flex justify-between"><span>Tarifa por Día:</span><span id="pay-print-rate"></span></p>
+        <p class="flex justify-between"><span>Subtotal Días:</span><span id="pay-print-subtotal"></span></p>
+        <p class="flex justify-between text-emerald-600"><span>Bonos / Comisiones:</span><span id="pay-print-bonus"></span></p>
+        <p class="flex justify-between text-rose-600"><span>Descuentos / Adelantos:</span><span id="pay-print-deduction"></span></p>
+        <p class="text-[9px] text-slate-400">------------------------------------</p>
+        <p class="flex justify-between font-bold text-xs"><span>NETO PAGADO:</span><span id="pay-print-total"></span></p>
+        
+        <div class="pt-6 text-center text-[9px] space-y-4">
+          <p>____________________________________<br>Firma del Empleado (Recibido Conforme)</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-xl text-xs font-bold">Imprimir Comprobante</button>
+        <button onclick="closeModal('modal-payroll-print')" class="flex-1 border py-2.5 rounded-xl text-xs font-bold text-slate-600">Cerrar</button>
       </div>
     </div>
   </div>
@@ -396,7 +432,7 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold mb-1 text-slate-700">Teléfono</label>
+            <label class="block font-bold mb-1 text-slate-700">Teléfono (WhatsApp)</label>
             <input type="text" id="u-phone" placeholder="(809) 000-0000" class="w-full border rounded-xl p-2.5">
           </div>
           <div>
@@ -429,6 +465,50 @@
       <div class="flex justify-end gap-2 border-t pt-3">
         <button onclick="closeModal('modal-user')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
         <button onclick="saveUser()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar Empleado</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR / EDITAR REPARACIÓN -->
+  <div id="modal-repair" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Orden de Servicio</h3>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Cliente (Nombre Completo)</label>
+          <input type="text" id="r-client" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Teléfono WhatsApp del Cliente</label>
+          <input type="text" id="r-phone" placeholder="Ej. 18095550199" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Modelo del Equipo</label>
+          <input type="text" id="r-device" placeholder="Ej: iPhone 13 Pro" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Falla / Observaciones</label>
+          <textarea id="r-issue" rows="2" class="w-full border rounded-xl p-2.5"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Costo Estimado ($)</label>
+            <input type="number" step="0.01" id="r-cost" class="w-full border rounded-xl p-2.5">
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Estado</label>
+            <select id="r-status" class="w-full border rounded-xl p-2.5">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En Proceso">En Proceso</option>
+              <option value="Listo">Listo</option>
+              <option value="Entregado">Entregado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-repair')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
+        <button onclick="saveRepair()" class="px-4 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-bold">Guardar Orden</button>
       </div>
     </div>
   </div>
@@ -471,46 +551,6 @@
       <div class="flex justify-end gap-2 border-t pt-3">
         <button onclick="closeModal('modal-product')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
         <button onclick="saveProduct()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: REGISTRAR REPARACIÓN -->
-  <div id="modal-repair" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Orden de Servicio</h3>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Cliente</label>
-          <input type="text" id="r-client" class="w-full border rounded-xl p-2.5">
-        </div>
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Modelo del Equipo</label>
-          <input type="text" id="r-device" placeholder="Ej: iPhone 13 Pro" class="w-full border rounded-xl p-2.5">
-        </div>
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Falla / Observaciones</label>
-          <textarea id="r-issue" rows="2" class="w-full border rounded-xl p-2.5"></textarea>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Costo Estimado ($)</label>
-            <input type="number" step="0.01" id="r-cost" class="w-full border rounded-xl p-2.5">
-          </div>
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Estado</label>
-            <select id="r-status" class="w-full border rounded-xl p-2.5">
-              <option value="Pendiente">Pendiente</option>
-              <option value="En Proceso">En Proceso</option>
-              <option value="Listo">Listo</option>
-              <option value="Entregado">Entregado</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 border-t pt-3">
-        <button onclick="closeModal('modal-repair')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
-        <button onclick="saveRepair()" class="px-4 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-bold">Guardar Orden</button>
       </div>
     </div>
   </div>
@@ -560,7 +600,7 @@
     let repairs = JSON.parse(localStorage.getItem('lk_repairs')) || [];
     let sales = JSON.parse(localStorage.getItem('lk_sales')) || [];
 
-    // Base de datos de Personal con expediente completo
+    // Personal / RRHH
     let users = JSON.parse(localStorage.getItem('lk_users')) || [
       { 
         id: 'U-1', 
@@ -574,7 +614,7 @@
         joined: '2026-05-10',
         attendance: ['2026-08-14 09:00:00'],
         idImage: null,
-        dayRate: 50.00,
+        dayRate: 200.00,
         bonus: 0,
         deduction: 0
       }
@@ -594,7 +634,7 @@
       localStorage.setItem('lk_users', JSON.stringify(users));
     }
 
-    // AUTENTICACIÓN Y REGISTRO DE ASISTENCIA POR PIN
+    // AUTENTICACIÓN Y ASISTENCIA
     function submitPin() {
       const enteredPin = document.getElementById('pin-input').value.trim();
       if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
@@ -604,7 +644,6 @@
       if(foundUser) {
         currentUser = foundUser;
         
-        // Registrar marcación de asistencia automática
         if (!foundUser.attendance) foundUser.attendance = [];
         const todayStr = new Date().toISOString().split('T')[0];
         const lastEntry = foundUser.attendance[foundUser.attendance.length - 1];
@@ -656,7 +695,7 @@
       stopCameraScanner();
     }
 
-    // GESTIÓN DE PERSONAL & FICHA RRHH
+    // RRHH & EXPEDIENTE
     function renderUsers() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
@@ -735,7 +774,6 @@
       renderUsers();
     }
 
-    // DETALLE / EXPEDIENTE DE EMPLEADO
     function openEmployeeDetail(empId) {
       selectedEmpForDetail = users.find(u => u.id === empId);
       if(!selectedEmpForDetail) return;
@@ -747,7 +785,6 @@
       document.getElementById('emp-detail-address').innerText = selectedEmpForDetail.address || 'No registrada';
       document.getElementById('emp-detail-emergency').innerText = selectedEmpForDetail.emergency || 'No registrado';
 
-      // Imagen ID
       const imgContainer = document.getElementById('emp-id-container');
       if(selectedEmpForDetail.idImage) {
         imgContainer.innerHTML = `<img src="${selectedEmpForDetail.idImage}" class="max-h-32 mx-auto rounded-lg shadow-sm">`;
@@ -755,7 +792,6 @@
         imgContainer.innerHTML = `<span class="text-slate-400">Sin documento subido</span>`;
       }
 
-      // Log de marcaciones
       const daysCount = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
       document.getElementById('emp-days-count').innerText = `${daysCount} días registrados`;
 
@@ -769,7 +805,6 @@
         logContainer.innerHTML = `<p class="text-slate-400 italic">Sin registros de entrada</p>`;
       }
 
-      // Valores de nómina
       document.getElementById('payroll-day-rate').value = selectedEmpForDetail.dayRate || 0;
       document.getElementById('payroll-bonus').value = selectedEmpForDetail.bonus || 0;
       document.getElementById('payroll-deduction').value = selectedEmpForDetail.deduction || 0;
@@ -814,6 +849,29 @@
       alert('Expediente de empleado actualizado.');
     }
 
+    function printPayrollVoucher() {
+      if(!selectedEmpForDetail) return;
+
+      const days = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      const rate = selectedEmpForDetail.dayRate || 0;
+      const bonus = selectedEmpForDetail.bonus || 0;
+      const deduction = selectedEmpForDetail.deduction || 0;
+      const subtotalDays = days * rate;
+      const netTotal = subtotalDays + bonus - deduction;
+
+      document.getElementById('pay-print-date').innerText = new Date().toLocaleDateString();
+      document.getElementById('pay-print-name').innerText = selectedEmpForDetail.name;
+      document.getElementById('pay-print-role').innerText = selectedEmpForDetail.role;
+      document.getElementById('pay-print-days').innerText = `${days} días`;
+      document.getElementById('pay-print-rate').innerText = `$${rate.toFixed(2)}`;
+      document.getElementById('pay-print-subtotal').innerText = `$${subtotalDays.toFixed(2)}`;
+      document.getElementById('pay-print-bonus').innerText = `+$${bonus.toFixed(2)}`;
+      document.getElementById('pay-print-deduction').innerText = `-$${deduction.toFixed(2)}`;
+      document.getElementById('pay-print-total').innerText = `$${netTotal.toFixed(2)}`;
+
+      document.getElementById('modal-payroll-print').classList.remove('hidden');
+    }
+
     function deleteUser(id) {
       if(users.length <= 1) return alert('No puede eliminar al único usuario.');
       if(confirm('¿Eliminar este empleado?')) {
@@ -823,38 +881,115 @@
       }
     }
 
-    // LECTOR Y ESCÁNER CON CÁMARA
+    // REPARACIONES & NOTIFICACIONES WHATSAPP
+    function renderRepairs() {
+      const grid = document.getElementById('repairs-grid');
+      grid.innerHTML = '';
+
+      repairs.forEach(r => {
+        const statusColors = {
+          'Pendiente': 'bg-amber-100 text-amber-800 border-amber-200',
+          'En Proceso': 'bg-blue-100 text-blue-800 border-blue-200',
+          'Listo': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+          'Entregado': 'bg-slate-100 text-slate-600 border-slate-200'
+        };
+
+        grid.innerHTML += `
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] font-mono text-slate-400 font-bold">${r.id}</span>
+                <h3 class="font-bold text-slate-900 text-sm">${r.device}</h3>
+              </div>
+              <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColors[r.status] || ''}">${r.status}</span>
+            </div>
+            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Cliente:</span> ${r.client}</p>
+            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Falla:</span> ${r.issue}</p>
+            <div class="flex justify-between items-center border-t pt-3 gap-2">
+              <span class="font-extrabold text-emerald-600 text-sm">$${r.cost.toFixed(2)}</span>
+              
+              <div class="flex items-center gap-1.5">
+                <select onchange="updateRepairStatus('${r.id}', this.value)" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
+                  <option value="Pendiente" ${r.status==='Pendiente'?'selected':''}>Pendiente</option>
+                  <option value="En Proceso" ${r.status==='En Proceso'?'selected':''}>En Proceso</option>
+                  <option value="Listo" ${r.status==='Listo'?'selected':''}>Listo</option>
+                  <option value="Entregado" ${r.status==='Entregado'?'selected':''}>Entregado</option>
+                </select>
+
+                ${r.phone ? `
+                  <button onclick="sendWhatsAppNotification('${r.id}')" title="Notificar por WhatsApp" class="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function openAddRepairModal() { document.getElementById('modal-repair').classList.remove('hidden'); }
+    
+    function saveRepair() {
+      const client = document.getElementById('r-client').value;
+      const phone = document.getElementById('r-phone').value.replace(/[^0-9]/g, '');
+      const device = document.getElementById('r-device').value;
+      const issue = document.getElementById('r-issue').value;
+      const cost = parseFloat(document.getElementById('r-cost').value) || 0;
+      const status = document.getElementById('r-status').value;
+
+      if(!client || !device) return alert('Ingresa los datos requeridos.');
+      repairs.unshift({ id: 'R-' + Math.floor(100 + Math.random() * 900), client, phone, device, issue, cost, status });
+      saveData();
+      closeModal('modal-repair');
+      renderRepairs();
+    }
+
+    function updateRepairStatus(id, newStatus) {
+      const repair = repairs.find(r => r.id === id);
+      if(repair) {
+        repair.status = newStatus;
+        saveData();
+
+        // Si cambia a "Listo", ofrecer enviar WhatsApp automático
+        if (newStatus === 'Listo' && repair.phone) {
+          if (confirm(`El servicio está LISTO. ¿Enviar notificación de WhatsApp al cliente (${repair.client})?`)) {
+            sendWhatsAppNotification(id);
+          }
+        }
+      }
+    }
+
+    function sendWhatsAppNotification(repairId) {
+      const r = repairs.find(item => item.id === repairId);
+      if(!r || !r.phone) return alert('No hay número de WhatsApp registrado.');
+
+      const message = `Hola ${r.client}! 👋 Le informamos desde LK SmartPhone Tecno que su equipo (${r.device}) ya se encuentra LISTO para retirar. Total: $${r.cost.toFixed(2)}. ¡Le esperamos!`;
+      const encodedMsg = encodeURIComponent(message);
+      window.open(`https://wa.me/${r.phone}?text=${encodedMsg}`, '_blank');
+    }
+
+    // ESCÁNER Y NAVEGACIÓN
     function startCameraScanner(target) {
       activeScanTarget = target;
       document.getElementById('modal-scanner').classList.remove('hidden');
 
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("interactive-camera");
-      }
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("interactive-camera");
 
       const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-      
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        (decodedText) => {
-          handleScannedCode(decodedText.trim());
-          stopCameraScanner();
-        },
-        () => {}
-      ).catch(err => {
-        alert("Error al abrir la cámara: " + err);
+      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        handleScannedCode(decodedText.trim());
+        stopCameraScanner();
+      }, () => {}).catch(err => {
+        alert("Error al abrir cámara: " + err);
         stopCameraScanner();
       });
     }
 
     function stopCameraScanner() {
       if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          document.getElementById('modal-scanner').classList.add('hidden');
-        }).catch(() => {
-          document.getElementById('modal-scanner').classList.add('hidden');
-        });
+        html5QrCode.stop().then(() => document.getElementById('modal-scanner').classList.add('hidden')).catch(() => document.getElementById('modal-scanner').classList.add('hidden'));
       } else {
         document.getElementById('modal-scanner').classList.add('hidden');
       }
@@ -863,19 +998,14 @@
     function handleScannedCode(code) {
       if (activeScanTarget === 'pos') {
         const prod = inventory.find(p => p.code.toLowerCase() === code.toLowerCase());
-        if (prod) {
-          addToCart(prod.id);
-        } else {
-          document.getElementById('pos-search').value = code;
-          renderPosProducts();
-        }
+        if (prod) addToCart(prod.id);
+        else { document.getElementById('pos-search').value = code; renderPosProducts(); }
       } else if (activeScanTarget === 'inventory') {
         document.getElementById('inv-search').value = code;
         renderInventory();
       }
     }
 
-    // NAVEGACIÓN Y RESTO MÓDULOS
     function switchTab(tabId) {
       document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -900,6 +1030,7 @@
     }
 
     function filterPosCat(cat) { activeCategory = cat; renderPosProducts(); }
+    
     function renderPosProducts() {
       const query = document.getElementById('pos-search').value.toLowerCase();
       const grid = document.getElementById('pos-products-grid');
@@ -1045,63 +1176,6 @@
 
     function deleteProduct(id) {
       if(confirm('¿Eliminar producto?')) { inventory = inventory.filter(p => p.id !== id); saveData(); renderInventory(); }
-    }
-
-    function renderRepairs() {
-      const grid = document.getElementById('repairs-grid');
-      grid.innerHTML = '';
-
-      repairs.forEach(r => {
-        const statusColors = {
-          'Pendiente': 'bg-amber-100 text-amber-800 border-amber-200',
-          'En Proceso': 'bg-blue-100 text-blue-800 border-blue-200',
-          'Listo': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-          'Entregado': 'bg-slate-100 text-slate-600 border-slate-200'
-        };
-
-        grid.innerHTML += `
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-            <div class="flex justify-between items-start">
-              <div>
-                <span class="text-[10px] font-mono text-slate-400 font-bold">${r.id}</span>
-                <h3 class="font-bold text-slate-900 text-sm">${r.device}</h3>
-              </div>
-              <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColors[r.status] || ''}">${r.status}</span>
-            </div>
-            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Cliente:</span> ${r.client}</p>
-            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Falla:</span> ${r.issue}</p>
-            <div class="flex justify-between items-center border-t pt-3">
-              <span class="font-extrabold text-emerald-600 text-sm">$${r.cost.toFixed(2)}</span>
-              <select onchange="updateRepairStatus('${r.id}', this.value)" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
-                <option value="Pendiente" ${r.status==='Pendiente'?'selected':''}>Pendiente</option>
-                <option value="En Proceso" ${r.status==='En Proceso'?'selected':''}>En Proceso</option>
-                <option value="Listo" ${r.status==='Listo'?'selected':''}>Listo</option>
-                <option value="Entregado" ${r.status==='Entregado'?'selected':''}>Entregado</option>
-              </select>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function openAddRepairModal() { document.getElementById('modal-repair').classList.remove('hidden'); }
-    function saveRepair() {
-      const client = document.getElementById('r-client').value;
-      const device = document.getElementById('r-device').value;
-      const issue = document.getElementById('r-issue').value;
-      const cost = parseFloat(document.getElementById('r-cost').value) || 0;
-      const status = document.getElementById('r-status').value;
-
-      if(!client || !device) return alert('Ingresa datos requeridos');
-      repairs.unshift({ id: 'R-' + Math.floor(100 + Math.random() * 900), client, device, issue, cost, status });
-      saveData();
-      closeModal('modal-repair');
-      renderRepairs();
-    }
-
-    function updateRepairStatus(id, newStatus) {
-      const repair = repairs.find(r => r.id === id);
-      if(repair) { repair.status = newStatus; saveData(); }
     }
 
     function renderHistory() {
