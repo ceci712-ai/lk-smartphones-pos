@@ -3,13 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LK SmartPhone Tecno - POS, Inventario, RRHH & WhatsApp</title>
+  <title>LK SmartPhone Tecno - POS Cloud & RRHH</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- HTML5 QR Code / Barcode Scanner CDN -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- FIREBASE SDKs (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <style>
     .brand-pink { color: #ff007f; }
     .bg-brand-pink { background-color: #ff007f; }
@@ -21,6 +26,12 @@
   </style>
 </head>
 <body class="bg-slate-900 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- INDICADOR DE CONEXIÓN A LA NUBE -->
+  <div id="cloud-status" class="fixed top-2 right-2 z-50 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md">
+    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+    <span>Conectando a Nube...</span>
+  </div>
 
   <!-- MODAL DE LOGIN (INICIO DE SESIÓN SECURE) -->
   <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -359,14 +370,23 @@
             <label class="block font-bold mb-1">Pago por Día ($)</label>
             <input type="number" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
           </div>
-          <div>
-            <label class="block font-bold mb-1">Bonos / Comisiones ($)</label>
-            <input type="number" id="payroll-bonus" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
-          </div>
-          <div>
-            <label class="block font-bold mb-1">Descuentos ($)</label>
-            <input type="number" id="payroll-deduction" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
-          </div>
+          // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
+  authDomain: "lk-smartphones-pos.firebaseapp.com",
+  projectId: "lk-smartphones-pos",
+  storageBucket: "lk-smartphones-pos.firebasestorage.app",
+  messagingSenderId: "942578519902",
+  appId: "1:942578519902:web:e01565a4c46299154189cf"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
         </div>
 
         <div class="flex justify-between items-center pt-2 border-t font-bold text-sm">
@@ -603,20 +623,85 @@
 
   <!-- JAVASCRIPT DE LA APLICACIÓN -->
   <script>
+    // ⚙️ PEGA TUS CREDENCIALES DE FIREBASE AQUÍ:
+    const firebaseConfig = {
+      apiKey: "REEMPLAZAR_POR_TU_API_KEY",
+      authDomain: "REEMPLAZAR_POR_TU_PROJECT_ID.firebaseapp.com",
+      projectId: "REEMPLAZAR_POR_TU_PROJECT_ID",
+      storageBucket: "REEMPLAZAR_POR_TU_PROJECT_ID.appspot.com",
+      messagingSenderId: "REEMPLAZAR_NUMEROS",
+      appId: "REEMPLAZAR_APP_ID"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     // Estado Base
-    let inventory = JSON.parse(localStorage.getItem('lk_inventory')) || [
-      { id: '1', name: 'iPhone 13 128GB', category: 'Teléfonos', code: '8839201', price: 650.00, stock: 3 },
-      { id: '2', name: 'Funda Silicona iPhone', category: 'Accesorios', code: 'ACC001', price: 15.00, stock: 25 },
-      { id: '3', name: 'Vape Pod Kit', category: 'Vapeo', code: 'VAP102', price: 35.00, stock: 8 }
-    ];
+    let inventory = [];
+    let repairs = [];
+    let sales = [];
+    let users = [];
 
-    let repairs = JSON.parse(localStorage.getItem('lk_repairs')) || [];
-    let sales = JSON.parse(localStorage.getItem('lk_sales')) || [];
+    let cart = [];
+    let activeCategory = 'All';
+    let currentUser = null;
+    let selectedEmpForDetail = null;
+    let html5QrCode = null;
+    let activeScanTarget = 'pos';
 
-    // Personal / RRHH
-    let users = JSON.parse(localStorage.getItem('lk_users')) || [
-      { 
-        id: 'U-1', 
+    // SINCRONIZACIÓN EN TIEMPO REAL CON LA NUBE
+    function initCloudSync() {
+      // 1. Inventario
+      db.collection("inventory").onSnapshot(snapshot => {
+        inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if(inventory.length === 0) seedDefaultInventory();
+        renderPosProducts();
+        renderInventory();
+        renderDashboard();
+        updateCloudStatus();
+      });
+
+      // 2. Reparaciones
+      db.collection("repairs").onSnapshot(snapshot => {
+        repairs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderRepairs();
+        renderDashboard();
+      });
+
+      // 3. Ventas
+      db.collection("sales").onSnapshot(snapshot => {
+        sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderHistory();
+        renderDashboard();
+      });
+
+      // 4. Personal / RRHH
+      db.collection("users").onSnapshot(snapshot => {
+        users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if(users.length === 0) seedDefaultUser();
+        renderUsers();
+      });
+    }
+
+    function updateCloudStatus() {
+      const badge = document.getElementById('cloud-status');
+      badge.className = "fixed top-2 right-2 z-50 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md";
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Nube Conectada</span>`;
+    }
+
+    // SEMILLAS DE DATOS INICIALES EN NUBE
+    function seedDefaultInventory() {
+      const defaults = [
+        { name: 'iPhone 13 128GB', category: 'Teléfonos', code: '8839201', price: 650.00, stock: 3 },
+        { name: 'Funda Silicona iPhone', category: 'Accesorios', code: 'ACC001', price: 15.00, stock: 25 },
+        { name: 'Vape Pod Kit', category: 'Vapeo', code: 'VAP102', price: 35.00, stock: 8 }
+      ];
+      defaults.forEach(item => db.collection("inventory").add(item));
+    }
+
+    function seedDefaultUser() {
+      db.collection("users").add({
         name: 'Cecilyah Brito', 
         email: 'admin@lksmartphone.com', 
         phone: '(809) 555-0199',
@@ -627,27 +712,11 @@
         joined: '2026-05-10',
         attendance: ['2026-08-14 09:00:00'],
         idImage: null,
-        dayRate: 50.00,
-        bonus: 0,
-        deduction: 0
-      }
-    ];
-
-    let cart = [];
-    let activeCategory = 'All';
-    let currentUser = null;
-    let selectedEmpForDetail = null;
-    let html5QrCode = null;
-    let activeScanTarget = 'pos';
-
-    function saveData() {
-      localStorage.setItem('lk_inventory', JSON.stringify(inventory));
-      localStorage.setItem('lk_repairs', JSON.stringify(repairs));
-      localStorage.setItem('lk_sales', JSON.stringify(sales));
-      localStorage.setItem('lk_users', JSON.stringify(users));
+        dayRate: 50.00, bonus: 0, deduction: 0
+      });
     }
 
-    // AUTENTICACIÓN Y ASISTENCIA
+    // AUTENTICACIÓN Y ASISTENCIA POR PIN
     function submitPin() {
       const enteredPin = document.getElementById('pin-input').value.trim();
       if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
@@ -657,13 +726,13 @@
       if(foundUser) {
         currentUser = foundUser;
         
-        if (!foundUser.attendance) foundUser.attendance = [];
+        let updatedAttendance = foundUser.attendance || [];
         const todayStr = new Date().toISOString().split('T')[0];
-        const lastEntry = foundUser.attendance[foundUser.attendance.length - 1];
+        const lastEntry = updatedAttendance[updatedAttendance.length - 1];
         
         if (!lastEntry || !lastEntry.startsWith(todayStr)) {
-          foundUser.attendance.push(new Date().toLocaleString());
-          saveData();
+          updatedAttendance.push(new Date().toLocaleString());
+          db.collection("users").doc(foundUser.id).update({ attendance: updatedAttendance });
         }
 
         const badgeStyle = foundUser.role === 'Administrador' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300';
@@ -724,7 +793,7 @@
           <tr class="hover:bg-slate-50">
             <td class="p-4 font-bold text-slate-800">
               <p class="text-xs font-bold text-slate-900">${u.name}</p>
-              <p class="text-[10px] text-slate-400 font-normal">${u.email}</p>
+              <p class="text-[10px] text-slate-400 font-normal">${u.email || ''}</p>
             </td>
             <td class="p-4 text-slate-600 text-[11px]">
               <p>📞 ${u.phone || 'Sin tel.'}</p>
@@ -772,8 +841,7 @@
         return alert('Este PIN ya está asignado a otro usuario.');
       }
 
-      users.push({ 
-        id: 'U-' + Date.now(), 
+      db.collection("users").add({ 
         name, phone, email, address, emergency, role, 
         pin: pin || null, 
         joined: new Date().toISOString().split('T')[0],
@@ -782,9 +850,7 @@
         dayRate: 0, bonus: 0, deduction: 0
       });
 
-      saveData();
       closeModal('modal-user');
-      renderUsers();
     }
 
     function openEmployeeDetail(empId) {
@@ -839,7 +905,7 @@
       reader.onload = function(e) {
         selectedEmpForDetail.idImage = e.target.result;
         document.getElementById('emp-id-container').innerHTML = `<img src="${e.target.result}" class="max-h-32 mx-auto rounded-lg shadow-sm">`;
-        saveData();
+        db.collection("users").doc(selectedEmpForDetail.id).update({ idImage: e.target.result });
       };
       reader.readAsDataURL(file);
     }
@@ -867,15 +933,15 @@
         return alert('Este PIN ya está en uso por otro empleado.');
       }
 
-      selectedEmpForDetail.pin = newPin || null;
-      selectedEmpForDetail.dayRate = parseFloat(document.getElementById('payroll-day-rate').value) || 0;
-      selectedEmpForDetail.bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
-      selectedEmpForDetail.deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
+      db.collection("users").doc(selectedEmpForDetail.id).update({
+        pin: newPin || null,
+        dayRate: parseFloat(document.getElementById('payroll-day-rate').value) || 0,
+        bonus: parseFloat(document.getElementById('payroll-bonus').value) || 0,
+        deduction: parseFloat(document.getElementById('payroll-deduction').value) || 0
+      });
 
-      saveData();
       closeModal('modal-employee-detail');
-      renderUsers();
-      alert('Expediente y PIN de empleado actualizados.');
+      alert('Expediente y PIN sincronizados en la nube.');
     }
 
     function printPayrollVoucher() {
@@ -904,13 +970,11 @@
     function deleteUser(id) {
       if(users.length <= 1) return alert('No puede eliminar al único usuario.');
       if(confirm('¿Eliminar este empleado?')) {
-        users = users.filter(u => u.id !== id);
-        saveData();
-        renderUsers();
+        db.collection("users").doc(id).delete();
       }
     }
 
-    // REPARACIONES & EDICIÓN
+    // REPARACIONES & EDICIÓN NUBE
     function renderRepairs() {
       const grid = document.getElementById('repairs-grid');
       grid.innerHTML = '';
@@ -927,7 +991,7 @@
           <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
             <div class="flex justify-between items-start">
               <div>
-                <span class="text-[10px] font-mono text-slate-400 font-bold">${r.id}</span>
+                <span class="text-[10px] font-mono text-slate-400 font-bold">${r.code || 'REP'}</span>
                 <h3 class="font-bold text-slate-900 text-sm">${r.device}</h3>
               </div>
               <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColors[r.status] || ''}">${r.status}</span>
@@ -936,7 +1000,7 @@
             <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Tel/WhatsApp:</span> ${r.phone || 'No registrado'}</p>
             <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Falla:</span> ${r.issue}</p>
             <div class="flex justify-between items-center border-t pt-3 gap-2">
-              <span class="font-extrabold text-emerald-600 text-sm">$${r.cost.toFixed(2)}</span>
+              <span class="font-extrabold text-emerald-600 text-sm">$${parseFloat(r.cost || 0).toFixed(2)}</span>
               
               <div class="flex items-center gap-1.5">
                 <button onclick="openEditRepairModal('${r.id}')" title="Editar Información" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1">
@@ -979,7 +1043,7 @@
       const r = repairs.find(item => item.id === repairId);
       if(!r) return;
 
-      document.getElementById('repair-modal-title').innerText = 'Editar Orden: ' + r.id;
+      document.getElementById('repair-modal-title').innerText = 'Editar Orden';
       document.getElementById('r-editing-id').value = r.id;
       document.getElementById('r-client').value = r.client || '';
       document.getElementById('r-phone').value = r.phone || '';
@@ -1003,36 +1067,23 @@
       if(!client || !device) return alert('Ingresa los datos requeridos.');
 
       if(editingId) {
-        // Editar existente
-        const r = repairs.find(item => item.id === editingId);
-        if(r) {
-          r.client = client;
-          r.phone = phone;
-          r.device = device;
-          r.issue = issue;
-          r.cost = cost;
-          r.status = status;
-        }
+        db.collection("repairs").doc(editingId).update({ client, phone, device, issue, cost, status });
       } else {
-        // Crear nueva orden
-        repairs.unshift({ id: 'R-' + Math.floor(100 + Math.random() * 900), client, phone, device, issue, cost, status });
+        db.collection("repairs").add({ 
+          code: 'R-' + Math.floor(100 + Math.random() * 900), 
+          client, phone, device, issue, cost, status 
+        });
       }
 
-      saveData();
       closeModal('modal-repair');
-      renderRepairs();
     }
 
     function updateRepairStatus(id, newStatus) {
+      db.collection("repairs").doc(id).update({ status: newStatus });
       const repair = repairs.find(r => r.id === id);
-      if(repair) {
-        repair.status = newStatus;
-        saveData();
-
-        if (newStatus === 'Listo' && repair.phone) {
-          if (confirm(`El servicio está LISTO. ¿Enviar notificación de WhatsApp al cliente (${repair.client})?`)) {
-            sendWhatsAppNotification(id);
-          }
+      if(newStatus === 'Listo' && repair && repair.phone) {
+        if (confirm(`El servicio está LISTO. ¿Enviar notificación de WhatsApp al cliente (${repair.client})?`)) {
+          sendWhatsAppNotification(id);
         }
       }
     }
@@ -1041,86 +1092,26 @@
       const r = repairs.find(item => item.id === repairId);
       if(!r || !r.phone) return alert('No hay número de WhatsApp registrado.');
 
-      const message = `Hola ${r.client}! 👋 Le informamos desde LK SmartPhone Tecno que su equipo (${r.device}) ya se encuentra LISTO para retirar. Total: $${r.cost.toFixed(2)}. ¡Le esperamos!`;
+      const message = `Hola ${r.client}! 👋 Le informamos desde LK SmartPhone Tecno que su equipo (${r.device}) ya se encuentra LISTO para retirar. Total: $${parseFloat(r.cost || 0).toFixed(2)}. ¡Le esperamos!`;
       const encodedMsg = encodeURIComponent(message);
       window.open(`https://wa.me/${r.phone}?text=${encodedMsg}`, '_blank');
     }
 
-    // ESCÁNER Y NAVEGACIÓN
-    function startCameraScanner(target) {
-      activeScanTarget = target;
-      document.getElementById('modal-scanner').classList.remove('hidden');
-
-      if (!html5QrCode) html5QrCode = new Html5Qrcode("interactive-camera");
-
-      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-        handleScannedCode(decodedText.trim());
-        stopCameraScanner();
-      }, () => {}).catch(err => {
-        alert("Error al abrir cámara: " + err);
-        stopCameraScanner();
-      });
-    }
-
-    function stopCameraScanner() {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => document.getElementById('modal-scanner').classList.add('hidden')).catch(() => document.getElementById('modal-scanner').classList.add('hidden'));
-      } else {
-        document.getElementById('modal-scanner').classList.add('hidden');
-      }
-    }
-
-    function handleScannedCode(code) {
-      if (activeScanTarget === 'pos') {
-        const prod = inventory.find(p => p.code.toLowerCase() === code.toLowerCase());
-        if (prod) addToCart(prod.id);
-        else { document.getElementById('pos-search').value = code; renderPosProducts(); }
-      } else if (activeScanTarget === 'inventory') {
-        document.getElementById('inv-search').value = code;
-        renderInventory();
-      }
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-brand-pink', 'text-white');
-        btn.classList.add('bg-slate-800', 'text-slate-300');
-      });
-
-      const activeNav = document.getElementById(`nav-${tabId}`);
-      if(activeNav) {
-        activeNav.classList.remove('bg-slate-800', 'text-slate-300');
-        activeNav.classList.add('bg-brand-pink', 'text-white');
-      }
-
-      if(tabId === 'dashboard') renderDashboard();
-      if(tabId === 'pos') renderPosProducts();
-      if(tabId === 'inventory') renderInventory();
-      if(tabId === 'repairs') renderRepairs();
-      if(tabId === 'history') renderHistory();
-      if(tabId === 'users') renderUsers();
-    }
-
-    function filterPosCat(cat) { activeCategory = cat; renderPosProducts(); }
-    
+    // POS & INVENTARIO NUBE
     function renderPosProducts() {
       const query = document.getElementById('pos-search').value.toLowerCase();
       const grid = document.getElementById('pos-products-grid');
       grid.innerHTML = '';
 
-      inventory.filter(p => (activeCategory === 'All' || p.category === activeCategory) && (p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query)))
+      inventory.filter(p => (activeCategory === 'All' || p.category === activeCategory) && (p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))))
         .forEach(p => {
           grid.innerHTML += `
             <div onclick="addToCart('${p.id}')" class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-3 cursor-pointer hover:border-pink-500 hover:scale-[1.02] transition">
               <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-pink-500/20 brand-pink uppercase">${p.category}</span>
               <h4 class="font-bold text-white text-xs mt-2 line-clamp-1">${p.name}</h4>
-              <p class="text-[10px] text-slate-400 font-mono">${p.code}</p>
+              <p class="text-[10px] text-slate-400 font-mono">${p.code || ''}</p>
               <div class="flex justify-between items-center mt-3">
-                <span class="font-extrabold text-emerald-400 text-xs">$${p.price.toFixed(2)}</span>
+                <span class="font-extrabold text-emerald-400 text-xs">$${parseFloat(p.price).toFixed(2)}</span>
                 <span class="text-[10px] font-bold ${p.stock < 3 ? 'text-rose-400' : 'text-slate-400'}">Stk: ${p.stock}</span>
               </div>
             </div>
@@ -1186,18 +1177,22 @@
       if(cart.length === 0) return alert('El carrito está vacío');
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       const method = document.getElementById('cart-payment-method').value;
-      const saleId = 'VEN-' + Math.floor(1000 + Math.random() * 9000);
+      const saleCode = 'VEN-' + Math.floor(1000 + Math.random() * 9000);
       const date = new Date().toLocaleString();
 
+      // Descontar stock en la Nube
       cart.forEach(cartItem => {
         const prod = inventory.find(p => p.id === cartItem.id);
-        if(prod) prod.stock -= cartItem.qty;
+        if(prod) {
+          const newStock = Math.max(0, prod.stock - cartItem.qty);
+          db.collection("inventory").doc(prod.id).update({ stock: newStock });
+        }
       });
 
-      sales.unshift({ id: saleId, date, items: [...cart], total, method });
-      saveData();
+      // Registrar Venta
+      db.collection("sales").add({ code: saleCode, date, items: cart, total, method });
 
-      document.getElementById('rec-id').innerText = saleId;
+      document.getElementById('rec-id').innerText = saleCode;
       document.getElementById('rec-date').innerText = date;
       document.getElementById('rec-method').innerText = method;
       document.getElementById('rec-total').innerText = `$${total.toFixed(2)}`;
@@ -1217,14 +1212,14 @@
       const tbody = document.getElementById('inventory-table-body');
       tbody.innerHTML = '';
 
-      inventory.filter(p => p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query))
+      inventory.filter(p => p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query)))
         .forEach(p => {
           tbody.innerHTML += `
             <tr class="hover:bg-slate-50">
               <td class="p-4 font-bold text-slate-800">${p.name}</td>
               <td class="p-4"><span class="px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600">${p.category}</span></td>
-              <td class="p-4 text-slate-500 font-mono text-[11px]">${p.code}</td>
-              <td class="p-4 font-extrabold text-emerald-600">$${p.price.toFixed(2)}</td>
+              <td class="p-4 text-slate-500 font-mono text-[11px]">${p.code || ''}</td>
+              <td class="p-4 font-extrabold text-emerald-600">$${parseFloat(p.price).toFixed(2)}</td>
               <td class="p-4 font-bold ${p.stock < 3 ? 'text-rose-500' : 'text-slate-700'}">${p.stock}</td>
               <td class="p-4 text-center admin-only">
                 ${currentUser && currentUser.role === 'Administrador' ? `<button onclick="deleteProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '-'}
@@ -1244,14 +1239,12 @@
       const stock = parseInt(document.getElementById('p-stock').value);
 
       if(!name || isNaN(price)) return alert('Campos requeridos vacíos');
-      inventory.push({ id: Date.now().toString(), name, category, code, price, stock });
-      saveData();
+      db.collection("inventory").add({ name, category, code, price, stock });
       closeModal('modal-product');
-      renderInventory();
     }
 
     function deleteProduct(id) {
-      if(confirm('¿Eliminar producto?')) { inventory = inventory.filter(p => p.id !== id); saveData(); renderInventory(); }
+      if(confirm('¿Eliminar producto de la nube?')) { db.collection("inventory").doc(id).delete(); }
     }
 
     function renderHistory() {
@@ -1260,18 +1253,18 @@
       sales.forEach(s => {
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50">
-            <td class="p-4 font-mono font-bold brand-pink text-xs">${s.id}</td>
+            <td class="p-4 font-mono font-bold brand-pink text-xs">${s.code || 'VEN'}</td>
             <td class="p-4 text-[11px] text-slate-500">${s.date}</td>
-            <td class="p-4 text-xs font-medium">${s.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</td>
+            <td class="p-4 text-xs font-medium">${s.items ? s.items.map(i => `${i.name} (x${i.qty})`).join(', ') : ''}</td>
             <td class="p-4 text-xs font-semibold">${s.method}</td>
-            <td class="p-4 font-extrabold text-emerald-600 text-xs">$${s.total.toFixed(2)}</td>
+            <td class="p-4 font-extrabold text-emerald-600 text-xs">$${parseFloat(s.total || 0).toFixed(2)}</td>
           </tr>
         `;
       });
     }
 
     function renderDashboard() {
-      const totalSalesToday = sales.reduce((sum, s) => sum + s.total, 0);
+      const totalSalesToday = sales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
       const pendingRepairsCount = repairs.filter(r => r.status !== 'Entregado').length;
       const lowStockCount = inventory.filter(p => p.stock < 3).length;
 
@@ -1281,13 +1274,77 @@
       document.getElementById('dash-active-users').innerText = users.length;
     }
 
+    // ESCÁNER Y UTILIDADES
+    function startCameraScanner(target) {
+      activeScanTarget = target;
+      document.getElementById('modal-scanner').classList.remove('hidden');
+
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("interactive-camera");
+
+      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        handleScannedCode(decodedText.trim());
+        stopCameraScanner();
+      }, () => {}).catch(err => {
+        alert("Error al abrir cámara: " + err);
+        stopCameraScanner();
+      });
+    }
+
+    function stopCameraScanner() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => document.getElementById('modal-scanner').classList.add('hidden')).catch(() => document.getElementById('modal-scanner').classList.add('hidden'));
+      } else {
+        document.getElementById('modal-scanner').classList.add('hidden');
+      }
+    }
+
+    function handleScannedCode(code) {
+      if (activeScanTarget === 'pos') {
+        const prod = inventory.find(p => p.code && p.code.toLowerCase() === code.toLowerCase());
+        if (prod) addToCart(prod.id);
+        else { document.getElementById('pos-search').value = code; renderPosProducts(); }
+      } else if (activeScanTarget === 'inventory') {
+        document.getElementById('inv-search').value = code;
+        renderInventory();
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-pink', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if(activeNav) {
+        activeNav.classList.remove('bg-slate-800', 'text-slate-300');
+        activeNav.classList.add('bg-brand-pink', 'text-white');
+      }
+
+      if(tabId === 'dashboard') renderDashboard();
+      if(tabId === 'pos') renderPosProducts();
+      if(tabId === 'inventory') renderInventory();
+      if(tabId === 'repairs') renderRepairs();
+      if(tabId === 'history') renderHistory();
+      if(tabId === 'users') renderUsers();
+    }
+
+    function filterPosCat(cat) { activeCategory = cat; renderPosProducts(); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     document.getElementById('pin-input').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') submitPin();
     });
 
-    lucide.createIcons();
+    // Iniciar Sincronización al cargar la página
+    window.onload = function() {
+      initCloudSync();
+      lucide.createIcons();
+    };
   </script>
 </body>
 </html>
