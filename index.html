@@ -54,7 +54,7 @@
       </div>
 
       <div class="text-[11px] text-slate-400 border-t pt-4">
-        <p class="italic">Consulte a su Administrador si olvidó su PIN.</p>
+        <p class="italic">El sistema valida su PIN actualizado en la nube.</p>
       </div>
     </div>
   </div>
@@ -377,7 +377,8 @@
   projectId: "lk-smartphones-pos",
   storageBucket: "lk-smartphones-pos.firebasestorage.app",
   messagingSenderId: "942578519902",
-  appId: "1:942578519902:web:e01565a4c46299154189cf"          <div class="space-y-2 bg-white p-3 rounded-lg border">
+  appId: "1:942578519902:web:e01565a4c46299154189cf"
+          <div class="space-y-2 bg-white p-3 rounded-lg border">
             <label class="block font-bold text-slate-700">PIN Actual (4 dígitos):</label>
             <div class="flex gap-2">
               <input type="text" id="emp-pin-edit" maxlength="4" placeholder="Ej. 1234" class="w-full border rounded-lg p-2 font-mono text-center font-bold text-sm">
@@ -699,11 +700,14 @@
         renderDashboard();
       });
 
-      // 4. Personal / RRHH
+      // 4. Personal / RRHH (Conectado y validado en tiempo real)
       db.collection("users").onSnapshot(snapshot => {
         users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if(users.length === 0) seedDefaultUser();
-        renderUsers();
+        if(users.length === 0) {
+          seedDefaultUser();
+        } else {
+          renderUsers();
+        }
       });
     }
 
@@ -733,36 +737,46 @@
         role: 'Administrador', 
         pin: '9999', 
         joined: '2026-05-10',
-        attendance: ['2026-08-14 09:00:00'],
+        attendance: [],
         idImage: null,
         dayRate: 50.00, bonus: 0, deduction: 0
       });
     }
 
-    // AUTENTICACIÓN Y ASISTENCIA POR PIN
-    function submitPin() {
+    // AUTENTICACIÓN Y ASISTENCIA POR PIN (CONSULTA DIRECTAMENTE A FIRESTORE)
+    async function submitPin() {
       const enteredPin = document.getElementById('pin-input').value.trim();
       if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
 
-      const foundUser = users.find(u => u.pin === enteredPin);
+      try {
+        // Consultar directamente a la base de datos para asegurar el PIN más reciente
+        const snapshot = await db.collection("users").get();
+        const freshUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        users = freshUsers; // Actualizar lista global
 
-      if(foundUser) {
-        currentUser = foundUser;
-        
-        let updatedAttendance = foundUser.attendance || [];
-        const todayStr = new Date().toISOString().split('T')[0];
-        const lastEntry = updatedAttendance[updatedAttendance.length - 1];
-        
-        if (!lastEntry || !lastEntry.startsWith(todayStr)) {
-          updatedAttendance.push(new Date().toLocaleString());
-          db.collection("users").doc(foundUser.id).update({ attendance: updatedAttendance });
+        const foundUser = freshUsers.find(u => String(u.pin) === String(enteredPin));
+
+        if(foundUser) {
+          currentUser = foundUser;
+          
+          let updatedAttendance = foundUser.attendance || [];
+          const todayStr = new Date().toISOString().split('T')[0];
+          const lastEntry = updatedAttendance[updatedAttendance.length - 1];
+          
+          if (!lastEntry || !lastEntry.startsWith(todayStr)) {
+            updatedAttendance.push(new Date().toLocaleString());
+            db.collection("users").doc(foundUser.id).update({ attendance: updatedAttendance });
+          }
+
+          const badgeStyle = foundUser.role === 'Administrador' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300';
+          setupUserInterface(foundUser.name, foundUser.role, badgeStyle);
+        } else {
+          alert('PIN Incorrecto. Asegúrese de usar el PIN actual configurado en la ficha.');
+          document.getElementById('pin-input').value = '';
         }
-
-        const badgeStyle = foundUser.role === 'Administrador' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300';
-        setupUserInterface(foundUser.name, foundUser.role, badgeStyle);
-      } else {
-        alert('PIN Incorrecto o no registrado.');
-        document.getElementById('pin-input').value = '';
+      } catch (error) {
+        console.error("Error al validar PIN:", error);
+        alert('Error de conexión con la nube. Verifique su internet.');
       }
     }
 
@@ -800,7 +814,7 @@
       stopCameraScanner();
     }
 
-    // RRHH, PIN & EXPEDIENTE EDITABLE (NUEVO)
+    // RRHH, PIN & EXPEDIENTE EDITABLE
     function renderUsers() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
@@ -880,7 +894,6 @@
       selectedEmpForDetail = users.find(u => String(u.id) === String(empId));
       if(!selectedEmpForDetail) return alert('No se encontró la ficha del empleado.');
 
-      // Llenar campos editables con los datos actuales
       document.getElementById('emp-edit-name').value = selectedEmpForDetail.name || '';
       document.getElementById('emp-edit-phone').value = selectedEmpForDetail.phone || '';
       document.getElementById('emp-edit-email').value = selectedEmpForDetail.email || '';
@@ -966,7 +979,6 @@
         return alert('Este PIN ya está en uso por otro empleado.');
       }
 
-      // Guardar todos los cambios actualizados en Firestore
       db.collection("users").doc(selectedEmpForDetail.id).update({
         name: newName,
         phone: newPhone,
