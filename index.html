@@ -20,7 +20,7 @@
 </head>
 <body class="bg-slate-900 text-slate-800 font-sans min-h-screen flex flex-col">
 
-  <!-- MODAL DE LOGIN (INICIO DE SESIÓN) -->
+  <!-- MODAL DE LOGIN (INICIO DE SESIÓN SECURE) -->
   <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center space-y-6">
       <div class="flex justify-center items-center gap-2">
@@ -29,29 +29,19 @@
           <span class="brand-pink">LK</span> SmartPhone Tecno
         </h2>
       </div>
-      <p class="text-xs text-slate-500 font-medium">Ingrese su PIN para acceder al sistema</p>
+      <p class="text-xs text-slate-500 font-medium">Ingrese su PIN de 4 dígitos para ingresar</p>
       
       <div class="space-y-4">
         <input type="password" id="pin-input" maxlength="4" placeholder="••••" autofocus
                class="w-full text-center text-3xl font-bold tracking-widest py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:outline-none">
-        
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="attemptLogin('1234')" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-            Acceso Empleado
-          </button>
-          <button onclick="attemptLogin('9999')" class="p-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition">
-            Acceso Admin
-          </button>
-        </div>
 
         <button onclick="submitPin()" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
-          Ingresar
+          Ingresar al Sistema
         </button>
       </div>
 
       <div class="text-[11px] text-slate-400 border-t pt-4">
-        <p>PIN Demo Empleado: <span class="font-mono font-bold text-slate-600">1234</span></p>
-        <p>PIN Demo Admin: <span class="font-mono font-bold text-slate-600">9999</span></p>
+        <p class="italic">Consulte a su Administrador si olvidó su PIN.</p>
       </div>
     </div>
   </div>
@@ -67,7 +57,7 @@
           </h1>
           <p class="text-xs text-slate-400 flex items-center gap-1">
             <span id="user-role-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-500/20 text-blue-400">Rol</span>
-            • Sistema Gestión Tienda
+            • <span id="current-user-name" class="font-semibold text-white">Usuario</span>
           </p>
         </div>
       </div>
@@ -101,7 +91,7 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto p-4 hidden">
 
-    <!-- 1. DASHBOARD / OVERVIEW (SOLO ADMIN) -->
+    <!-- 1. DASHBOARD -->
     <section id="tab-dashboard" class="space-y-6 hidden">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
@@ -133,52 +123,9 @@
           <div class="p-3 bg-purple-500/20 text-purple-400 rounded-xl"><i data-lucide="users"></i></div>
         </div>
       </div>
-
-      <!-- App Visibility / Health Status Overview -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl text-white space-y-4 md:col-span-2">
-          <h2 class="text-base font-bold flex items-center gap-2">
-            <i data-lucide="activity" class="text-emerald-400"></i> Estado & Visibilidad de la Aplicación
-          </h2>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 space-y-1">
-              <span class="text-slate-400">Estado del Sistema</span>
-              <p class="text-emerald-400 font-bold flex items-center gap-1.5 mt-1">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> En Línea / Activo
-              </p>
-            </div>
-            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 space-y-1">
-              <span class="text-slate-400">Base de Datos</span>
-              <p class="text-white font-bold mt-1">LocalStorage Sincronizado</p>
-            </div>
-            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 space-y-1">
-              <span class="text-slate-400">Plataforma</span>
-              <p class="text-white font-bold mt-1">GitHub Pages Web App</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl text-white space-y-3">
-          <h2 class="text-base font-bold">Resumen de Inventario</h2>
-          <div class="space-y-2 text-xs">
-            <div class="flex justify-between border-b border-slate-700/50 pb-2">
-              <span class="text-slate-400">Teléfonos registrados:</span>
-              <span id="cat-phones-count" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between border-b border-slate-700/50 pb-2">
-              <span class="text-slate-400">Productos Vapeo:</span>
-              <span id="cat-vapes-count" class="font-bold">0</span>
-            </div>
-            <div class="flex justify-between border-b border-slate-700/50 pb-2">
-              <span class="text-slate-400">Accesorios & Otros:</span>
-              <span id="cat-acc-count" class="font-bold">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
 
-    <!-- 2. POS / VENTAS (TODOS LOS ROLES) -->
+    <!-- 2. POS / VENTAS -->
     <section id="tab-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl text-white space-y-4">
         <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
@@ -287,7 +234,7 @@
       </div>
     </section>
 
-    <!-- 5. HISTORIAL DE VENTAS (SOLO ADMIN) -->
+    <!-- 5. HISTORIAL DE VENTAS -->
     <section id="tab-history" class="hidden space-y-4">
       <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
@@ -307,15 +254,15 @@
       </div>
     </section>
 
-    <!-- 6. GESTIÓN DE EQUIPO / USUARIOS (SOLO ADMIN) -->
+    <!-- 6. GESTIÓN DE EQUIPO / USUARIOS Y PINS -->
     <section id="tab-users" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
         <div>
-          <h2 class="font-bold text-sm">Gestión de Usuarios del Sistema</h2>
-          <p class="text-[11px] text-slate-400">Control de acceso de Empleados y Administradores</p>
+          <h2 class="font-bold text-sm">Gestión de Usuarios y PINs</h2>
+          <p class="text-[11px] text-slate-400">Asigne, modifique o elimine PINs de acceso para su personal</p>
         </div>
         <button onclick="openInviteUserModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
-          <i data-lucide="user-plus"></i> Invitar Usuario
+          <i data-lucide="user-plus"></i> Registrar Usuario
         </button>
       </div>
 
@@ -326,8 +273,8 @@
               <th class="p-4">Nombre</th>
               <th class="p-4">Email</th>
               <th class="p-4">Rol</th>
-              <th class="p-4">Fecha de Ingreso (Joined)</th>
-              <th class="p-4 text-center">Acciones</th>
+              <th class="p-4">PIN Actual</th>
+              <th class="p-4 font-center text-center">Gestión de PIN / Usuario</th>
             </tr>
           </thead>
           <tbody id="users-table-body" class="divide-y divide-slate-100">
@@ -339,112 +286,36 @@
 
   </main>
 
-  <!-- MODAL: INVITAR / AGREGAR USUARIO -->
+  <!-- MODAL: REGISTRAR / EDITAR USUARIO -->
   <div id="modal-user" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Invitar Nuevo Usuario</h3>
+      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Usuario</h3>
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-bold mb-1 text-slate-700">Nombre Completo</label>
           <input type="text" id="u-name" placeholder="Ej. Alex Santiago" class="w-full border rounded-xl p-2.5 focus:outline-none focus:border-pink-500">
         </div>
         <div>
-          <label class="block font-bold mb-1 text-slate-700">Correo Electrónico (Email)</label>
+          <label class="block font-bold mb-1 text-slate-700">Correo Electrónico</label>
           <input type="email" id="u-email" placeholder="ejemplo@lksmartphone.com" class="w-full border rounded-xl p-2.5 focus:outline-none focus:border-pink-500">
         </div>
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Rol de Usuario</label>
-          <select id="u-role" class="w-full border rounded-xl p-2.5">
-            <option value="Empleado">Empleado (Solo POS & Reparaciones)</option>
-            <option value="Administrador">Administrador (Acceso Total)</option>
-          </select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Rol</label>
+            <select id="u-role" class="w-full border rounded-xl p-2.5">
+              <option value="Empleado">Empleado</option>
+              <option value="Administrador">Administrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">PIN (4 Dígitos)</label>
+            <input type="password" id="u-pin" maxlength="4" placeholder="••••" class="w-full border rounded-xl p-2.5 font-mono text-center">
+          </div>
         </div>
       </div>
       <div class="flex justify-end gap-2 border-t pt-3">
         <button onclick="closeModal('modal-user')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
-        <button onclick="saveUser()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Enviar Invitación</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: AGREGAR PRODUCTO -->
-  <div id="modal-product" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Agregar Nuevo Producto</h3>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Nombre del Producto</label>
-          <input type="text" id="p-name" class="w-full border rounded-xl p-2.5 focus:outline-none focus:border-pink-500">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Categoría</label>
-            <select id="p-cat" class="w-full border rounded-xl p-2.5">
-              <option value="Teléfonos">Teléfonos</option>
-              <option value="Accesorios">Accesorios</option>
-              <option value="Vapeo">Vapeo</option>
-              <option value="Misceláneos">Misceláneos</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Código / IMEI</label>
-            <input type="text" id="p-code" class="w-full border rounded-xl p-2.5">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Precio ($)</label>
-            <input type="number" step="0.01" id="p-price" class="w-full border rounded-xl p-2.5">
-          </div>
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Stock Inicial</label>
-            <input type="number" id="p-stock" class="w-full border rounded-xl p-2.5">
-          </div>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 border-t pt-3">
-        <button onclick="closeModal('modal-product')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
-        <button onclick="saveProduct()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: REGISTRAR REPARACIÓN -->
-  <div id="modal-repair" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Orden de Servicio</h3>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Cliente</label>
-          <input type="text" id="r-client" class="w-full border rounded-xl p-2.5">
-        </div>
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Modelo del Equipo</label>
-          <input type="text" id="r-device" placeholder="Ej: iPhone 13 Pro" class="w-full border rounded-xl p-2.5">
-        </div>
-        <div>
-          <label class="block font-bold mb-1 text-slate-700">Falla / Observaciones</label>
-          <textarea id="r-issue" rows="2" class="w-full border rounded-xl p-2.5"></textarea>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Costo Estimado ($)</label>
-            <input type="number" step="0.01" id="r-cost" class="w-full border rounded-xl p-2.5">
-          </div>
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Estado</label>
-            <select id="r-status" class="w-full border rounded-xl p-2.5">
-              <option value="Pendiente">Pendiente</option>
-              <option value="En Proceso">En Proceso</option>
-              <option value="Listo">Listo</option>
-              <option value="Entregado">Entregado</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 border-t pt-3">
-        <button onclick="closeModal('modal-repair')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
-        <button onclick="saveRepair()" class="px-4 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-bold">Guardar Orden</button>
+        <button onclick="saveUser()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar Usuario</button>
       </div>
     </div>
   </div>
@@ -484,27 +355,25 @@
 
   <!-- JAVASCRIPT DE LA APLICACIÓN -->
   <script>
-    // Inicialización de Datos en LocalStorage
+    // Configuración Inicial de Base de Datos Local
     let inventory = JSON.parse(localStorage.getItem('lk_inventory')) || [
       { id: '1', name: 'iPhone 13 128GB', category: 'Teléfonos', code: 'IMEI-8839201', price: 650.00, stock: 3 },
       { id: '2', name: 'Funda Silicona iPhone', category: 'Accesorios', code: 'ACC-001', price: 15.00, stock: 25 },
-      { id: '3', name: 'Vape Pod Kit', category: 'Vapeo', code: 'VAP-102', price: 35.00, stock: 8 },
-      { id: '4', name: 'Cargador Rápido 20W', category: 'Misceláneos', code: 'MIS-505', price: 20.00, stock: 12 }
+      { id: '3', name: 'Vape Pod Kit', category: 'Vapeo', code: 'VAP-102', price: 35.00, stock: 8 }
     ];
 
-    let repairs = JSON.parse(localStorage.getItem('lk_repairs')) || [
-      { id: 'R-101', client: 'Carlos Gómez', device: 'Samsung S21', issue: 'Cambio de Pantalla', cost: 95.00, status: 'En Proceso' }
-    ];
-
-    let users = JSON.parse(localStorage.getItem('lk_users')) || [
-      { id: 'U-1', name: 'Cecilyah Brito', email: 'admin@lksmartphone.com', role: 'Administrador', joined: '2026-05-10' },
-      { id: 'U-2', name: 'Técnico Principal', email: 'staff@lksmartphone.com', role: 'Empleado', joined: '2026-06-01' }
-    ];
-
+    let repairs = JSON.parse(localStorage.getItem('lk_repairs')) || [];
     let sales = JSON.parse(localStorage.getItem('lk_sales')) || [];
+
+    // Base de datos de Usuarios con PINs individuales
+    let users = JSON.parse(localStorage.getItem('lk_users')) || [
+      { id: 'U-1', name: 'Cecilyah Brito', email: 'admin@lksmartphone.com', role: 'Administrador', pin: '9999', joined: '2026-05-10' },
+      { id: 'U-2', name: 'Empleado General', email: 'staff@lksmartphone.com', role: 'Empleado', pin: '1234', joined: '2026-06-01' }
+    ];
+
     let cart = [];
     let activeCategory = 'All';
-    let currentUserRole = null;
+    let currentUser = null;
 
     function saveData() {
       localStorage.setItem('lk_inventory', JSON.stringify(inventory));
@@ -513,35 +382,37 @@
       localStorage.setItem('lk_users', JSON.stringify(users));
     }
 
-    // AUTENTICACIÓN Y ROLES
-    function attemptLogin(pin) {
-      if(pin === '9999') {
-        currentUserRole = 'admin';
-        setupUserInterface('Administrador', 'bg-purple-500/20 text-purple-300');
-      } else if(pin === '1234') {
-        currentUserRole = 'staff';
-        setupUserInterface('Empleado', 'bg-blue-500/20 text-blue-300');
+    // AUTENTICACIÓN DINÁMICA VÍA PIN
+    function submitPin() {
+      const enteredPin = document.getElementById('pin-input').value.trim();
+      if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
+
+      // Buscar usuario cuyo PIN coincida
+      const foundUser = users.find(u => u.pin === enteredPin);
+
+      if(foundUser) {
+        currentUser = foundUser;
+        const badgeStyle = foundUser.role === 'Administrador' 
+          ? 'bg-purple-500/20 text-purple-300' 
+          : 'bg-blue-500/20 text-blue-300';
+        setupUserInterface(foundUser.name, foundUser.role, badgeStyle);
       } else {
-        alert('PIN Incorrecto');
+        alert('PIN Incorrecto o no registrado.');
         document.getElementById('pin-input').value = '';
       }
     }
 
-    function submitPin() {
-      const pin = document.getElementById('pin-input').value;
-      attemptLogin(pin);
-    }
-
-    function setupUserInterface(roleName, badgeClass) {
+    function setupUserInterface(name, roleName, badgeClass) {
       document.getElementById('login-modal').classList.add('hidden');
       document.getElementById('main-header').classList.remove('hidden');
       document.getElementById('main-content').classList.remove('hidden');
 
+      document.getElementById('current-user-name').innerText = name;
       const badge = document.getElementById('user-role-badge');
       badge.innerText = roleName;
       badge.className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeClass}`;
 
-      if(currentUserRole === 'staff') {
+      if(roleName === 'Empleado') {
         document.getElementById('nav-dashboard').classList.add('hidden');
         document.getElementById('nav-history').classList.add('hidden');
         document.getElementById('nav-users').classList.add('hidden');
@@ -557,14 +428,14 @@
     }
 
     function logout() {
-      currentUserRole = null;
+      currentUser = null;
       document.getElementById('pin-input').value = '';
       document.getElementById('main-header').classList.add('hidden');
       document.getElementById('main-content').classList.add('hidden');
       document.getElementById('login-modal').classList.remove('hidden');
     }
 
-    // NAVEGACIÓN
+    // NAVEGACIÓN ENTRE PESTAÑAS
     function switchTab(tabId) {
       document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -588,7 +459,7 @@
       if(tabId === 'users') renderUsers();
     }
 
-    // GESTIÓN DE USUARIOS
+    // GESTIÓN DE USUARIOS Y CONTROL DE PIN
     function renderUsers() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
@@ -605,9 +476,19 @@
             </td>
             <td class="p-4 text-slate-600 font-mono text-[11px]">${u.email}</td>
             <td class="p-4"><span class="px-2 py-1 rounded-full border text-[10px] font-bold ${roleBadge}">${u.role}</span></td>
-            <td class="p-4 text-slate-500 font-mono text-[11px]">${u.joined}</td>
-            <td class="p-4 text-center">
-              <button onclick="deleteUser('${u.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <td class="p-4 font-mono font-bold text-slate-700">${u.pin ? '•••• (' + u.pin + ')' : '<span class="text-rose-500 font-normal">Sin PIN</span>'}</td>
+            <td class="p-4 text-center space-x-2">
+              <button onclick="changeUserPin('${u.id}')" title="Cambiar/Asignar PIN" class="px-2 py-1 bg-amber-100 text-amber-800 hover:bg-amber-200 rounded-lg font-bold text-[10px]">
+                Cambiar PIN
+              </button>
+              ${u.pin ? `
+                <button onclick="removeUserPin('${u.id}')" title="Quitar PIN" class="px-2 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-bold text-[10px]">
+                  Quitar PIN
+                </button>
+              ` : ''}
+              <button onclick="deleteUser('${u.id}')" title="Eliminar Usuario" class="text-rose-500 hover:text-rose-700 p-1">
+                <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+              </button>
             </td>
           </tr>
         `;
@@ -616,120 +497,70 @@
     }
 
     function openInviteUserModal() { document.getElementById('modal-user').classList.remove('hidden'); }
+    
     function saveUser() {
       const name = document.getElementById('u-name').value;
       const email = document.getElementById('u-email').value;
       const role = document.getElementById('u-role').value;
-      const joined = new Date().toISOString().split('T')[0];
+      const pin = document.getElementById('u-pin').value.trim();
 
-      if(!name || !email) return alert('Por favor ingresa Nombre y Email');
+      if(!name || !email) return alert('Por favor complete Nombre y Email.');
+      if(pin && (pin.length !== 4 || isNaN(pin))) return alert('El PIN debe tener exactamente 4 números.');
 
-      users.push({ id: 'U-' + Date.now(), name, email, role, joined });
+      // Verificar que el PIN no pertenezca a otro usuario
+      if(pin && users.some(u => u.pin === pin)) {
+        return alert('Este PIN ya está asignado a otro usuario. Elija uno diferente.');
+      }
+
+      users.push({
+        id: 'U-' + Date.now(),
+        name,
+        email,
+        role,
+        pin: pin || null,
+        joined: new Date().toISOString().split('T')[0]
+      });
+
       saveData();
       closeModal('modal-user');
       renderUsers();
     }
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LK SmartPhone Tecno - POS & Inventario</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    .brand-pink { color: #ff007f; }
-    .bg-brand-pink { background-color: #ff007f; }
-    @media print {
-      body * { visibility: hidden; }
-      #printable-receipt, #printable-receipt * { visibility: visible; }
-      #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; font-size: 11px; }
+
+    function changeUserPin(userId) {
+      const u = users.find(item => item.id === userId);
+      if(!u) return;
+
+      const newPin = prompt(`Ingrese el nuevo PIN de 4 dígitos para ${u.name}:`);
+      if(newPin === null) return; // Cancelado
+
+      if(newPin !== "" && (newPin.length !== 4 || isNaN(newPin))) {
+        return alert('El PIN debe tener 4 dígitos numéricos.');
+      }
+
+      if(newPin && users.some(item => item.id !== userId && item.pin === newPin)) {
+        return alert('Ese PIN ya lo utiliza otro usuario.');
+      }
+
+      u.pin = newPin || null;
+      saveData();
+      renderUsers();
+      alert(`PIN para ${u.name} actualizado correctamente.`);
     }
-  </style>
-</head>
-<body class="bg-slate-900 text-slate-800 font-sans min-h-screen flex flex-col">
 
-  <!-- MODAL DE LOGIN (INICIO DE SESIÓN) -->
-  <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center space-y-6">
-      <div class="flex justify-center items-center gap-2">
-        <i data-lucide="smartphone" class="w-10 h-10 brand-pink"></i>
-        <h2 class="text-2xl font-black tracking-tight text-slate-900">
-          <span class="brand-pink">LK</span> SmartPhone Tecno
-        </h2>
-      </div>
-      <p class="text-xs text-slate-500 font-medium">Ingrese su PIN para acceder al sistema</p>
-      
-      <div class="space-y-4">
-        <input type="password" id="pin-input" maxlength="4" placeholder="••••" autofocus
-               class="w-full text-center text-3xl font-bold tracking-widest py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:outline-none">
-        
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="attemptLogin('1234')" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-            Acceso Empleado
-          </button>
-          <button onclick="attemptLogin('9999')" class="p-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition">
-            Acceso Admin
-          </button>
-        </div>
+    function removeUserPin(userId) {
+      const u = users.find(item => item.id === userId);
+      if(!u) return;
 
-        <button onclick="submitPin()" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
-          Ingresar
-        </button>
-      </div>
+      if(confirm(`¿Desea remover el PIN de acceso para ${u.name}? No podrá ingresar hasta tener un PIN asignado.`)) {
+        u.pin = null;
+        saveData();
+        renderUsers();
+      }
+    }
 
-      <div class="text-[11px] text-slate-400 border-t pt-4">
-        <p>PIN Demo Empleado: <span class="font-mono font-bold text-slate-600">1234</span></p>
-        <p>PIN Demo Admin: <span class="font-mono font-bold text-slate-600">9999</span></p>
-      </div>
-    </div>
-  </div>
-
-  // Configuración de Seguridad
-const ROLES = {
-  ADMIN_PIN: "9999",
-  STAFF_PIN: "1234"
-};
-
-let currentUserRole = null; // 'admin' o 'staff'
-
-function login() {
-  const pin = prompt("Ingrese su PIN de acceso:");
-  if (pin === ROLES.ADMIN_PIN) {
-    currentUserRole = 'admin';
-    alert("Bienvenido Administrador");
-    applyPermissions();
-  } else if (pin === ROLES.STAFF_PIN) {
-    currentUserRole = 'staff';
-    alert("Bienvenido Empleado");
-    applyPermissions();
-  } else {
-    alert("PIN Incorrecto");
-  }
-}
-
-function applyPermissions() {
-  if (currentUserRole === 'staff') {
-    // Ocultar pestañas sensibles para empleados
-    document.getElementById('nav-dashboard').style.display = 'none';
-    document.getElementById('nav-history').style.display = 'none';
-    
-    // Desactivar botones de eliminar en inventario
-    document.querySelectorAll('.btn-delete-product').forEach(btn => btn.style.display = 'none');
-    
-    // Redirigir directamente al POS
-    switchTab('pos');
-  } else {
-    // Mostrar todo al Administrador
-    document.getElementById('nav-dashboard').style.display = 'flex';
-    document.getElementById('nav-history').style.display = 'flex';
-  }
-}
-  
     function deleteUser(id) {
-      if(confirm('¿Eliminar acceso a este usuario?')) {
+      if(users.length <= 1) return alert('No puede eliminar al único usuario del sistema.');
+      if(confirm('¿Eliminar este usuario del equipo?')) {
         users = users.filter(u => u.id !== id);
         saveData();
         renderUsers();
@@ -746,14 +577,11 @@ function applyPermissions() {
       document.getElementById('dash-pending-repairs').innerText = pendingRepairsCount;
       document.getElementById('dash-low-stock').innerText = lowStockCount;
       document.getElementById('dash-active-users').innerText = users.length;
-
-      document.getElementById('cat-phones-count').innerText = inventory.filter(i => i.category === 'Teléfonos').length;
-      document.getElementById('cat-vapes-count').innerText = inventory.filter(i => i.category === 'Vapeo').length;
-      document.getElementById('cat-acc-count').innerText = inventory.filter(i => i.category === 'Accesorios' || i.category === 'Misceláneos').length;
     }
 
-    // POS Y RESTO DE MÓDULOS
+    // RESTO DE FUNCIONES (POS, INVENTARIO, REPARACIONES, HISTORIAL)
     function filterPosCat(cat) { activeCategory = cat; renderPosProducts(); }
+    
     function renderPosProducts() {
       const query = document.getElementById('pos-search').value.toLowerCase();
       const grid = document.getElementById('pos-products-grid');
@@ -874,31 +702,12 @@ function applyPermissions() {
               <td class="p-4 font-extrabold text-emerald-600">$${p.price.toFixed(2)}</td>
               <td class="p-4 font-bold ${p.stock < 3 ? 'text-rose-500' : 'text-slate-700'}">${p.stock}</td>
               <td class="p-4 text-center admin-only">
-                ${currentUserRole === 'admin' ? `<button onclick="deleteProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '-'}
+                ${currentUser && currentUser.role === 'Administrador' ? `<button onclick="deleteProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '-'}
               </td>
             </tr>
           `;
         });
       lucide.createIcons();
-    }
-
-    function openAddProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
-    function saveProduct() {
-      const name = document.getElementById('p-name').value;
-      const category = document.getElementById('p-cat').value;
-      const code = document.getElementById('p-code').value;
-      const price = parseFloat(document.getElementById('p-price').value);
-      const stock = parseInt(document.getElementById('p-stock').value);
-
-      if(!name || isNaN(price)) return alert('Campos requeridos vacíos');
-      inventory.push({ id: Date.now().toString(), name, category, code, price, stock });
-      saveData();
-      closeModal('modal-product');
-      renderInventory();
-    }
-
-    function deleteProduct(id) {
-      if(confirm('¿Eliminar producto?')) { inventory = inventory.filter(p => p.id !== id); saveData(); renderInventory(); }
     }
 
     function renderRepairs() {
@@ -936,26 +745,6 @@ function applyPermissions() {
           </div>
         `;
       });
-    }
-
-    function openAddRepairModal() { document.getElementById('modal-repair').classList.remove('hidden'); }
-    function saveRepair() {
-      const client = document.getElementById('r-client').value;
-      const device = document.getElementById('r-device').value;
-      const issue = document.getElementById('r-issue').value;
-      const cost = parseFloat(document.getElementById('r-cost').value) || 0;
-      const status = document.getElementById('r-status').value;
-
-      if(!client || !device) return alert('Ingresa datos requeridos');
-      repairs.unshift({ id: 'R-' + Math.floor(100 + Math.random() * 900), client, device, issue, cost, status });
-      saveData();
-      closeModal('modal-repair');
-      renderRepairs();
-    }
-
-    function updateRepairStatus(id, newStatus) {
-      const repair = repairs.find(r => r.id === id);
-      if(repair) { repair.status = newStatus; saveData(); }
     }
 
     function renderHistory() {
