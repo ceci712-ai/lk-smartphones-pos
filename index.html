@@ -370,14 +370,1347 @@
             <label class="block font-bold mb-1">Pago por Día ($)</label>
             <input type="number" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
           </div>
-         // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+       <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LK SmartPhone Tecno - POS Cloud & RRHH</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- HTML5 QR Code / Barcode Scanner CDN -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
+  <!-- FIREBASE SDKs (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    .brand-pink { color: #ff007f; }
+    .bg-brand-pink { background-color: #ff007f; }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-receipt, #printable-receipt *, #printable-payroll, #printable-payroll * { visibility: visible; }
+      #printable-receipt, #printable-payroll { position: absolute; left: 0; top: 0; width: 100%; font-size: 11px; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- INDICADOR DE CONEXIÓN A LA NUBE -->
+  <div id="cloud-status" class="fixed top-2 right-2 z-50 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md">
+    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+    <span>Conectando a Nube...</span>
+  </div>
+
+  <!-- MODAL DE LOGIN (INICIO DE SESIÓN SECURE) -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center space-y-6">
+      <div class="flex justify-center items-center gap-2">
+        <i data-lucide="smartphone" class="w-10 h-10 brand-pink"></i>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900">
+          <span class="brand-pink">LK</span> SmartPhone Tecno
+        </h2>
+      </div>
+      <p class="text-xs text-slate-500 font-medium">Ingrese su PIN de 4 dígitos para marcar asistencia e ingresar</p>
+      
+      <div class="space-y-4">
+        <input type="password" id="pin-input" maxlength="4" placeholder="••••" autofocus
+               class="w-full text-center text-3xl font-bold tracking-widest py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:outline-none">
+
+        <button onclick="submitPin()" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+          Marcar Entrada / Ingresar
+        </button>
+      </div>
+
+      <div class="text-[11px] text-slate-400 border-t pt-4">
+        <p class="italic">Consulte a su Administrador si olvidó su PIN.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER / NAVEGACIÓN -->
+  <header id="main-header" class="bg-slate-950 text-white border-b border-slate-800 shadow-xl hidden">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <i data-lucide="smartphone" class="w-8 h-8 brand-pink"></i>
+        <div>
+          <h1 class="text-xl font-extrabold tracking-tight">
+            <span class="brand-pink">LK</span> SmartPhone Tecno
+          </h1>
+          <p class="text-xs text-slate-400 flex items-center gap-1">
+            <span id="user-role-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-500/20 text-blue-400">Rol</span>
+            • <span id="current-user-name" class="font-semibold text-white">Usuario</span>
+          </p>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-1 overflow-x-auto py-1">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+        </button>
+        <button onclick="switchTab('pos')" id="nav-pos" class="nav-btn bg-brand-pink text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+          <i data-lucide="shopping-cart" class="w-4 h-4"></i> POS / Ventas
+        </button>
+        <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
+          <i data-lucide="package" class="w-4 h-4"></i> Inventario
+        </button>
+        <button onclick="switchTab('repairs')" id="nav-repairs" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
+          <i data-lucide="wrench" class="w-4 h-4"></i> Reparaciones
+        </button>
+        <button onclick="switchTab('history')" id="nav-history" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
+          <i data-lucide="history" class="w-4 h-4"></i> Historial
+        </button>
+        <button onclick="switchTab('users')" id="nav-users" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
+          <i data-lucide="users" class="w-4 h-4"></i> Personal & RRHH
+        </button>
+        <button onclick="logout()" title="Cerrar Sesión" class="ml-2 p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-xl transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto p-4 hidden">
+
+    <!-- 1. DASHBOARD -->
+    <section id="tab-dashboard" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-bold uppercase">Ventas de Hoy</p>
+            <h3 id="dash-today-sales" class="text-2xl font-black mt-1">$0.00</h3>
+          </div>
+          <div class="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl"><i data-lucide="dollar-sign"></i></div>
+        </div>
+        <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-bold uppercase">Reparaciones Pendientes</p>
+            <h3 id="dash-pending-repairs" class="text-2xl font-black mt-1">0</h3>
+          </div>
+          <div class="p-3 bg-amber-500/20 text-amber-400 rounded-xl"><i data-lucide="wrench"></i></div>
+        </div>
+        <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-bold uppercase">Stock Bajo (&lt;3)</p>
+            <h3 id="dash-low-stock" class="text-2xl font-black mt-1">0</h3>
+          </div>
+          <div class="p-3 bg-rose-500/20 text-rose-400 rounded-xl"><i data-lucide="alert-triangle"></i></div>
+        </div>
+        <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-bold uppercase">Personal Activo</p>
+            <h3 id="dash-active-users" class="text-2xl font-black mt-1">0</h3>
+          </div>
+          <div class="p-3 bg-purple-500/20 text-purple-400 rounded-xl"><i data-lucide="users"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. POS / VENTAS -->
+    <section id="tab-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl text-white space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+          <div class="flex gap-2 w-full sm:w-auto flex-1">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+              <input type="text" id="pos-search" oninput="renderPosProducts()" placeholder="Buscar o escanear código/IMEI..." 
+                     class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-pink-500">
+            </div>
+            <button onclick="startCameraScanner('pos')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shrink-0 transition">
+              <i data-lucide="camera" class="w-4 h-4"></i> Escanear
+            </button>
+          </div>
+
+          <div class="flex gap-1.5 w-full sm:w-auto overflow-x-auto py-1">
+            <button onclick="filterPosCat('All')" class="pos-cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-brand-pink text-white">Todos</button>
+            <button onclick="filterPosCat('Teléfonos')" class="pos-cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Teléfonos</button>
+            <button onclick="filterPosCat('Accesorios')" class="pos-cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Accesorios</button>
+            <button onclick="filterPosCat('Vapeo')" class="pos-cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Vapeo</button>
+            <button onclick="filterPosCat('Misceláneos')" class="pos-cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Otros</button>
+          </div>
+        </div>
+
+        <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[520px] overflow-y-auto pr-1">
+          <!-- Dinámico -->
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h2 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <i data-lucide="shopping-bag" class="brand-pink"></i> Carrito Actual
+            </h2>
+            <button onclick="clearCart()" class="text-xs text-rose-500 font-bold hover:underline">Vaciar</button>
+          </div>
+
+          <div id="cart-items" class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+            <p class="text-slate-400 text-center py-10 text-xs">El carrito está vacío</p>
+          </div>
+        </div>
+
+        <div class="border-t pt-4 space-y-3">
+          <div class="flex justify-between text-xs text-slate-500 font-medium">
+            <span>Subtotal:</span>
+            <span id="cart-subtotal" class="font-bold text-slate-800">$0.00</span>
+          </div>
+          <div class="flex justify-between text-xl font-black text-slate-900">
+            <span>Total:</span>
+            <span id="cart-total" class="brand-pink">$0.00</span>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-500 uppercase">Método de Pago</label>
+            <select id="cart-payment-method" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-semibold bg-slate-50">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta Crédito / Débito</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+            </select>
+          </div>
+
+          <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-sm">
+            <i data-lucide="check-circle"></i> Completar Venta
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. INVENTARIO -->
+    <section id="tab-inventory" class="hidden space-y-4">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+        <div class="flex gap-2 items-center w-full sm:w-auto">
+          <input type="text" id="inv-search" oninput="renderInventory()" placeholder="Buscar o escanear producto..." 
+                 class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-64 focus:outline-none focus:border-pink-500">
+          <button onclick="startCameraScanner('inventory')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="camera" class="w-4 h-4"></i> Escanear
+          </button>
+        </div>
+
+        <button id="btn-add-product" onclick="openAddProductModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+          <i data-lucide="plus"></i> Agregar Producto
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase font-bold">
+              <th class="p-4">Producto</th>
+              <th class="p-4">Categoría</th>
+              <th class="p-4">Código / IMEI</th>
+              <th class="p-4">Precio</th>
+              <th class="p-4">Stock</th>
+              <th class="p-4 text-center admin-only">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-table-body" class="divide-y divide-slate-100">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. REPARACIONES & EDICIÓN -->
+    <section id="tab-repairs" class="hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
+        <div>
+          <h2 class="font-bold text-sm">Órdenes de Servicio Técnico</h2>
+          <p class="text-[11px] text-slate-400">Garantía de 45 días • Límite 7 días para retiro • Notificaciones WhatsApp</p>
+        </div>
+        <button onclick="openAddRepairModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+          <i data-lucide="wrench"></i> Nueva Reparación
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="repairs-grid">
+        <!-- Dinámico -->
+      </div>
+    </section>
+
+    <!-- 5. HISTORIAL DE VENTAS -->
+    <section id="tab-history" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase font-bold">
+              <th class="p-4">ID Venta</th>
+              <th class="p-4">Fecha</th>
+              <th class="p-4">Detalle de Productos</th>
+              <th class="p-4">Pago</th>
+              <th class="p-4">Total</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body" class="divide-y divide-slate-100">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6. GESTIÓN DE PERSONAL & RRHH -->
+    <section id="tab-users" class="hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
+        <div>
+          <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina</h2>
+          <p class="text-[11px] text-slate-400">Fichas de empleados, identidades, PINs, registros de trabajo y recibos de pago</p>
+        </div>
+        <button onclick="openInviteUserModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+          <i data-lucide="user-plus"></i> Registrar Empleado
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase font-bold">
+              <th class="p-4">Empleado</th>
+              <th class="p-4">Contacto & Dirección</th>
+              <th class="p-4">Emergencia</th>
+              <th class="p-4">Rol / PIN</th>
+              <th class="p-4 text-center">Días Trabajados</th>
+              <th class="p-4 text-center">Acciones / Ficha</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body" class="divide-y divide-slate-100">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: EXPEDIENTE COMPLETO / PIN / NÓMINA DE EMPLEADO -->
+  <div id="modal-employee-detail" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 id="emp-detail-name" class="font-bold text-base text-slate-900">Nombre del Empleado</h3>
+          <p id="emp-detail-role" class="text-slate-500">Rol</p>
+        </div>
+        <button onclick="closeModal('modal-employee-detail')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Información Personal & ID -->
+        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Documentación & Contacto</h4>
+          <p><span class="font-bold">Teléfono:</span> <span id="emp-detail-phone">-</span></p>
+          <p><span class="font-bold">Email:</span> <span id="emp-detail-email">-</span></p>
+          <p><span class="font-bold">Dirección:</span> <span id="emp-detail-address">-</span></p>
+          <p><span class="font-bold">Contacto Emergencia:</span> <span id="emp-detail-emergency">-</span></p>
+          
+          <div class="pt-2">
+            <p class="font-bold mb-1">Copia Documento de Identidad (ID):</p>
+            <div id="emp-id-container" class="border rounded-xl p-2 bg-white text-center">
+              <span class="text-slate-400">Sin documento subido</span>
+            </div>
+            <input type="file" id="emp-id-file" accept="image/*" onchange="uploadEmployeeID(event)" class="mt-2 text-[10px] w-full">
+          </div>
+        </div>
+
+        <!-- Gestión de PIN & Asistencia -->
+        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Seguridad y PIN de Acceso</h4>
+          
+          <div class="space-y-2 bg-white p-3 rounded-lg border">
+            <label class="block font-bold text-slate-700">PIN Actual de 4 dígitos:</label>
+            <div class="flex gap-2">
+              <input type="text" id="emp-pin-edit" maxlength="4" placeholder="Ej. 1234" class="w-full border rounded-lg p-2 font-mono text-center font-bold text-sm">
+              <button onclick="clearEmpPin()" class="px-2 bg-rose-100 text-rose-700 hover:bg-rose-200 font-bold rounded-lg shrink-0 text-[10px]">Borrar PIN</button>
+            </div>
+            <p class="text-[10px] text-slate-400">Puedes modificarlo o reasignarlo en cualquier momento.</p>
+          </div>
+
+          <h4 class="font-bold text-slate-800 border-b pb-1 text-xs pt-2">Asistencia (Entradas por PIN)</h4>
+          <p><span class="font-bold">Total Días Trabajados:</span> <span id="emp-days-count" class="font-bold text-emerald-600">0 días</span></p>
+          <div class="max-h-28 overflow-y-auto border rounded-lg p-2 bg-white space-y-1 font-mono text-[10px]" id="emp-attendance-log">
+            <!-- Log de marcaciones -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Nómina y Pagos -->
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+        <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Cálculo de Nómina & Pagos</h4>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold mb-1">Pago por Día ($)</label>
+            <input type="number" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Bonos / Comisiones ($)</label>
+            <input type="number" id="payroll-bonus" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Descuentos ($)</label>
+            <input type="number" id="payroll-deduction" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-2 border-t font-bold text-sm">
+          <span>Total a Pagar Estimado:</span>
+          <span id="payroll-total-display" class="brand-pink">$0.00</span>
+        </div>
+      </div>
+
+      <div class="flex justify-between gap-2 border-t pt-3">
+        <button onclick="printPayrollVoucher()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante de Pago
+        </button>
+        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold">Guardar Cambios de Expediente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE IMPRESIÓN COMPROBANTE DE PAGO NÓMINA -->
+  <div id="modal-payroll-print" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+      <div id="printable-payroll" class="p-3 text-left font-mono text-[11px] text-slate-800 space-y-2">
+        <div class="text-center font-bold">
+          <p class="text-sm font-black"><span style="color:#ff007f">LK</span> SmartPhone Tecno</p>
+          <p class="text-[10px] font-normal text-slate-600">Comprobante de Pago de Nómina</p>
+          <p class="text-[9px] text-slate-400">------------------------------------</p>
+        </div>
+        <p>Fecha: <span id="pay-print-date"></span></p>
+        <p>Empleado: <span id="pay-print-name" class="font-bold"></span></p>
+        <p>Cargo: <span id="pay-print-role"></span></p>
+        <p class="text-[9px] text-slate-400">------------------------------------</p>
+        <p class="flex justify-between"><span>Días Trabajados:</span><span id="pay-print-days"></span></p>
+        <p class="flex justify-between"><span>Tarifa por Día:</span><span id="pay-print-rate"></span></p>
+        <p class="flex justify-between"><span>Subtotal Días:</span><span id="pay-print-subtotal"></span></p>
+        <p class="flex justify-between text-emerald-600"><span>Bonos / Comisiones:</span><span id="pay-print-bonus"></span></p>
+        <p class="flex justify-between text-rose-600"><span>Descuentos / Adelantos:</span><span id="pay-print-deduction"></span></p>
+        <p class="text-[9px] text-slate-400">------------------------------------</p>
+        <p class="flex justify-between font-bold text-xs"><span>NETO PAGADO:</span><span id="pay-print-total"></span></p>
+        
+        <div class="pt-6 text-center text-[9px] space-y-4">
+          <p>____________________________________<br>Firma del Empleado (Recibido Conforme)</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-xl text-xs font-bold">Imprimir Comprobante</button>
+        <button onclick="closeModal('modal-payroll-print')" class="flex-1 border py-2.5 rounded-xl text-xs font-bold text-slate-600">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ESCÁNER DE CÁMARA -->
+  <div id="modal-scanner" class="fixed inset-0 bg-slate-950/90 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+          <i data-lucide="camera" class="brand-pink"></i> Escaneando con Cámara
+        </h3>
+        <button onclick="stopCameraScanner()" class="text-slate-400 hover:text-slate-600 font-bold text-sm">✕</button>
+      </div>
+      <div id="interactive-camera" class="w-full bg-slate-900 rounded-xl overflow-hidden min-h-[220px]"></div>
+      <p class="text-[11px] text-slate-500">Apunta la cámara de tu teléfono al código de barras o código IMEI.</p>
+      <button onclick="stopCameraScanner()" class="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-bold">Cerrar Cámara</button>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR / EDITAR USUARIO -->
+  <div id="modal-user" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Nuevo Empleado</h3>
+      <div class="space-y-3 text-xs max-h-[70vh] overflow-y-auto pr-1">
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Nombre Completo</label>
+          <input type="text" id="u-name" placeholder="Ej. Alex Santiago Brito" class="w-full border rounded-xl p-2.5 focus:outline-none focus:border-pink-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Teléfono (WhatsApp)</label>
+            <input type="text" id="u-phone" placeholder="(809) 000-0000" class="w-full border rounded-xl p-2.5">
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Email</label>
+            <input type="email" id="u-email" placeholder="ejemplo@lksmartphone.com" class="w-full border rounded-xl p-2.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Dirección Residencial</label>
+          <input type="text" id="u-address" placeholder="Calle, Número, Ciudad" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div class="border-t pt-2">
+          <label class="block font-bold mb-1 text-slate-700">Contacto de Emergencia (Nombre / Teléfono)</label>
+          <input type="text" id="u-emergency" placeholder="Ej. Esposa: María (809) 111-2222" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div class="grid grid-cols-2 gap-3 border-t pt-2">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Rol</label>
+            <select id="u-role" class="w-full border rounded-xl p-2.5">
+              <option value="Empleado">Empleado</option>
+              <option value="Administrador">Administrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">PIN (4 Dígitos)</label>
+            <input type="password" id="u-pin" maxlength="4" placeholder="••••" class="w-full border rounded-xl p-2.5 font-mono text-center">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-user')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
+        <button onclick="saveUser()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar Empleado</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR / EDITAR REPARACIÓN -->
+  <div id="modal-repair" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <h3 id="repair-modal-title" class="font-bold text-base text-slate-900 border-b pb-2">Registrar Orden de Servicio</h3>
+      <input type="hidden" id="r-editing-id" value="">
+      
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Cliente (Nombre Completo)</label>
+          <input type="text" id="r-client" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Teléfono WhatsApp del Cliente</label>
+          <input type="text" id="r-phone" placeholder="Ej. 18095550199" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Modelo del Equipo</label>
+          <input type="text" id="r-device" placeholder="Ej: iPhone 13 Pro" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Falla / Observaciones</label>
+          <textarea id="r-issue" rows="2" class="w-full border rounded-xl p-2.5"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Costo Estimado ($)</label>
+            <input type="number" step="0.01" id="r-cost" class="w-full border rounded-xl p-2.5">
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Estado</label>
+            <select id="r-status" class="w-full border rounded-xl p-2.5">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En Proceso">En Proceso</option>
+              <option value="Listo">Listo</option>
+              <option value="Entregado">Entregado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-repair')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
+        <button onclick="saveRepair()" class="px-4 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-bold">Guardar Orden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGREGAR PRODUCTO -->
+  <div id="modal-product" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Agregar Nuevo Producto</h3>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold mb-1 text-slate-700">Nombre del Producto</label>
+          <input type="text" id="p-name" class="w-full border rounded-xl p-2.5 focus:outline-none focus:border-pink-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Categoría</label>
+            <select id="p-cat" class="w-full border rounded-xl p-2.5">
+              <option value="Teléfonos">Teléfonos</option>
+              <option value="Accesorios">Accesorios</option>
+              <option value="Vapeo">Vapeo</option>
+              <option value="Misceláneos">Misceláneos</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Código / IMEI</label>
+            <input type="text" id="p-code" class="w-full border rounded-xl p-2.5">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Precio ($)</label>
+            <input type="number" step="0.01" id="p-price" class="w-full border rounded-xl p-2.5">
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-slate-700">Stock Inicial</label>
+            <input type="number" id="p-stock" class="w-full border rounded-xl p-2.5">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-product')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
+        <button onclick="saveProduct()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RECIBO IMPRIMIBLE -->
+  <div id="modal-receipt" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl">
+      <div id="printable-receipt" class="p-2 text-left font-mono text-[11px] text-slate-800 space-y-2">
+        <div class="text-center font-bold">
+          <p class="text-sm font-black"><span style="color:#ff007f">LK</span> SmartPhone Tecno</p>
+          <p class="text-[10px] font-normal text-slate-600">Ventas, Repuestos & Servicio Técnico</p>
+          <p class="text-[9px] text-slate-400">------------------------------------</p>
+        </div>
+        <p>Fecha: <span id="rec-date"></span></p>
+        <p>Ticket #: <span id="rec-id"></span></p>
+        <p class="text-[9px] text-slate-400">------------------------------------</p>
+        <div id="rec-items" class="space-y-1"></div>
+        <p class="text-[9px] text-slate-400">------------------------------------</p>
+        <p class="flex justify-between font-bold text-xs"><span>TOTAL:</span><span id="rec-total"></span></p>
+        <p class="flex justify-between text-[10px]"><span>Pago:</span><span id="rec-method"></span></p>
+        
+        <div class="pt-3 border-t text-[8px] text-slate-500 text-center space-y-1 leading-tight">
+          <p class="font-bold">POLÍTICAS Y GARANTÍA</p>
+          <p>• 45 días de garantía en reparaciones técnicas.</p>
+          <p>• Límite máximo de 7 días para retirar el equipo.</p>
+          <p>• Aplica cargo por servicio de carga de batería.</p>
+          <p class="pt-1 font-bold">¡Gracias por su preferencia!</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-xl text-xs font-bold">Imprimir Ticket</button>
+        <button onclick="closeModal('modal-receipt')" class="flex-1 border py-2.5 rounded-xl text-xs font-bold text-slate-600">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT DE LA APLICACIÓN -->
+  <script>
+    // ⚙️ PEGA TUS CREDENCIALES DE FIREBASE AQUÍ:
+    const firebaseConfig = {
+      apiKey: "REEMPLAZAR_POR_TU_API_KEY",
+      authDomain: "REEMPLAZAR_POR_TU_PROJECT_ID.firebaseapp.com",
+      projectId: "REEMPLAZAR_POR_TU_PROJECT_ID",
+      storageBucket: "REEMPLAZAR_POR_TU_PROJECT_ID.appspot.com",
+      messagingSenderId: "REEMPLAZAR_NUMEROS",
+      appId: "REEMPLAZAR_APP_ID"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Estado Base
+    let inventory = [];
+    let repairs = [];
+    let sales = [];
+    let users = [];
+
+    let cart = [];
+    let activeCategory = 'All';
+    let currentUser = null;
+    let selectedEmpForDetail = null;
+    let html5QrCode = null;
+    let activeScanTarget = 'pos';
+
+    // SINCRONIZACIÓN EN TIEMPO REAL CON LA NUBE
+    function initCloudSync() {
+      // 1. Inventario
+      db.collection("inventory").onSnapshot(snapshot => {
+        inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if(inventory.length === 0) seedDefaultInventory();
+        renderPosProducts();
+        renderInventory();
+        renderDashboard();
+        updateCloudStatus();
+      });
+
+      // 2. Reparaciones
+      db.collection("repairs").onSnapshot(snapshot => {
+        repairs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderRepairs();
+        renderDashboard();
+      });
+
+      // 3. Ventas
+      db.collection("sales").onSnapshot(snapshot => {
+        sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderHistory();
+        renderDashboard();
+      });
+
+      // 4. Personal / RRHH
+      db.collection("users").onSnapshot(snapshot => {
+        users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if(users.length === 0) seedDefaultUser();
+        renderUsers();
+      });
+    }
+
+    function updateCloudStatus() {
+      const badge = document.getElementById('cloud-status');
+      badge.className = "fixed top-2 right-2 z-50 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md";
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Nube Conectada</span>`;
+    }
+
+    // SEMILLAS DE DATOS INICIALES EN NUBE
+    function seedDefaultInventory() {
+      const defaults = [
+        { name: 'iPhone 13 128GB', category: 'Teléfonos', code: '8839201', price: 650.00, stock: 3 },
+        { name: 'Funda Silicona iPhone', category: 'Accesorios', code: 'ACC001', price: 15.00, stock: 25 },
+        { name: 'Vape Pod Kit', category: 'Vapeo', code: 'VAP102', price: 35.00, stock: 8 }
+      ];
+      defaults.forEach(item => db.collection("inventory").add(item));
+    }
+
+    function seedDefaultUser() {
+      db.collection("users").add({
+        name: 'Cecilyah Brito', 
+        email: 'admin@lksmartphone.com', 
+        phone: '(809) 555-0199',
+        address: 'Calle Principal #12',
+        emergency: 'Alex - (809) 555-0100',
+        role: 'Administrador', 
+        pin: '9999', 
+        joined: '2026-05-10',
+        attendance: ['2026-08-14 09:00:00'],
+        idImage: null,
+        dayRate: 50.00, bonus: 0, deduction: 0
+      });
+    }
+
+    // AUTENTICACIÓN Y ASISTENCIA POR PIN
+    function submitPin() {
+      const enteredPin = document.getElementById('pin-input').value.trim();
+      if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
+
+      const foundUser = users.find(u => u.pin === enteredPin);
+
+      if(foundUser) {
+        currentUser = foundUser;
+        
+        let updatedAttendance = foundUser.attendance || [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const lastEntry = updatedAttendance[updatedAttendance.length - 1];
+        
+        if (!lastEntry || !lastEntry.startsWith(todayStr)) {
+          updatedAttendance.push(new Date().toLocaleString());
+          db.collection("users").doc(foundUser.id).update({ attendance: updatedAttendance });
+        }
+
+        const badgeStyle = foundUser.role === 'Administrador' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300';
+        setupUserInterface(foundUser.name, foundUser.role, badgeStyle);
+      } else {
+        alert('PIN Incorrecto o no registrado.');
+        document.getElementById('pin-input').value = '';
+      }
+    }
+
+    function setupUserInterface(name, roleName, badgeClass) {
+      document.getElementById('login-modal').classList.add('hidden');
+      document.getElementById('main-header').classList.remove('hidden');
+      document.getElementById('main-content').classList.remove('hidden');
+
+      document.getElementById('current-user-name').innerText = name;
+      const badge = document.getElementById('user-role-badge');
+      badge.innerText = roleName;
+      badge.className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeClass}`;
+
+      if(roleName === 'Empleado') {
+        document.getElementById('nav-dashboard').classList.add('hidden');
+        document.getElementById('nav-history').classList.add('hidden');
+        document.getElementById('nav-users').classList.add('hidden');
+        document.getElementById('btn-add-product').classList.add('hidden');
+        switchTab('pos');
+      } else {
+        document.getElementById('nav-dashboard').classList.remove('hidden');
+        document.getElementById('nav-history').classList.remove('hidden');
+        document.getElementById('nav-users').classList.remove('hidden');
+        document.getElementById('btn-add-product').classList.remove('hidden');
+        switchTab('dashboard');
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('pin-input').value = '';
+      document.getElementById('main-header').classList.add('hidden');
+      document.getElementById('main-content').classList.add('hidden');
+      document.getElementById('login-modal').classList.remove('hidden');
+      stopCameraScanner();
+    }
+
+    // RRHH, PIN & EXPEDIENTE (CORREGIDO Y OPTIMIZADO)
+    function renderUsers() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = '';
+
+      users.forEach(u => {
+        const roleBadge = u.role === 'Administrador' 
+          ? 'bg-purple-100 text-purple-800 border-purple-200' 
+          : 'bg-blue-100 text-blue-800 border-blue-200';
+
+        const daysWorked = u.attendance ? u.attendance.length : 0;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 font-bold text-slate-800">
+              <p class="text-xs font-bold text-slate-900">${u.name}</p>
+              <p class="text-[10px] text-slate-400 font-normal">${u.email || ''}</p>
+            </td>
+            <td class="p-4 text-slate-600 text-[11px]">
+              <p>📞 ${u.phone || 'Sin tel.'}</p>
+              <p class="text-[10px] text-slate-400">🏠 ${u.address || 'Sin dirección'}</p>
+            </td>
+            <td class="p-4 text-slate-600 text-[11px] font-medium">
+              🚨 ${u.emergency || 'No especificado'}
+            </td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 rounded-full border text-[9px] font-bold ${roleBadge}">${u.role}</span>
+              <p class="text-[10px] font-mono font-bold text-slate-500 mt-1">PIN: ${u.pin ? '•••• (' + u.pin + ')' : 'Sin PIN'}</p>
+            </td>
+            <td class="p-4 text-center font-bold text-emerald-600 text-xs">
+              ${daysWorked} días
+            </td>
+            <td class="p-4 text-center space-x-1">
+              <button onclick="openEmployeeDetail('${u.id}')" class="px-2.5 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg font-bold text-[10px]">
+                Expediente / PIN / Nómina
+              </button>
+              <button onclick="deleteUser('${u.id}')" title="Eliminar" class="text-rose-500 hover:text-rose-700 p-1">
+                <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function openInviteUserModal() { document.getElementById('modal-user').classList.remove('hidden'); }
+    
+    function saveUser() {
+      const name = document.getElementById('u-name').value;
+      const phone = document.getElementById('u-phone').value;
+      const email = document.getElementById('u-email').value;
+      const address = document.getElementById('u-address').value;
+      const emergency = document.getElementById('u-emergency').value;
+      const role = document.getElementById('u-role').value;
+      const pin = document.getElementById('u-pin').value.trim();
+
+      if(!name) return alert('Por favor complete el nombre del empleado.');
+      if(pin && (pin.length !== 4 || isNaN(pin))) return alert('El PIN debe tener exactamente 4 números.');
+
+      if(pin && users.some(u => u.pin === pin)) {
+        return alert('Este PIN ya está asignado a otro usuario.');
+      }
+
+      db.collection("users").add({ 
+        name, phone, email, address, emergency, role, 
+        pin: pin || null, 
+        joined: new Date().toISOString().split('T')[0],
+        attendance: [],
+        idImage: null,
+        dayRate: 0, bonus: 0, deduction: 0
+      });
+
+      closeModal('modal-user');
+    }
+
+    function openEmployeeDetail(empId) {
+      selectedEmpForDetail = users.find(u => String(u.id) === String(empId));
+      if(!selectedEmpForDetail) return alert('No se encontró la ficha del empleado.');
+
+      document.getElementById('emp-detail-name').innerText = selectedEmpForDetail.name;
+      document.getElementById('emp-detail-role').innerText = selectedEmpForDetail.role;
+      document.getElementById('emp-detail-phone').innerText = selectedEmpForDetail.phone || 'No registrado';
+      document.getElementById('emp-detail-email').innerText = selectedEmpForDetail.email || 'No registrado';
+      document.getElementById('emp-detail-address').innerText = selectedEmpForDetail.address || 'No registrada';
+      document.getElementById('emp-detail-emergency').innerText = selectedEmpForDetail.emergency || 'No registrado';
+      document.getElementById('emp-pin-edit').value = selectedEmpForDetail.pin || '';
+
+      const imgContainer = document.getElementById('emp-id-container');
+      if(selectedEmpForDetail.idImage) {
+        imgContainer.innerHTML = `<img src="${selectedEmpForDetail.idImage}" class="max-h-32 mx-auto rounded-lg shadow-sm">`;
+      } else {
+        imgContainer.innerHTML = `<span class="text-slate-400">Sin documento subido</span>`;
+      }
+
+      const daysCount = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      document.getElementById('emp-days-count').innerText = `${daysCount} días registrados`;
+
+      const logContainer = document.getElementById('emp-attendance-log');
+      logContainer.innerHTML = '';
+      if(selectedEmpForDetail.attendance && selectedEmpForDetail.attendance.length > 0) {
+        selectedEmpForDetail.attendance.slice().reverse().forEach(entry => {
+          logContainer.innerHTML += `<p class="text-slate-700">✓ Entró: ${entry}</p>`;
+        });
+      } else {
+        logContainer.innerHTML = `<p class="text-slate-400 italic">Sin registros de entrada</p>`;
+      }
+
+      document.getElementById('payroll-day-rate').value = selectedEmpForDetail.dayRate || 0;
+      document.getElementById('payroll-bonus').value = selectedEmpForDetail.bonus || 0;
+      document.getElementById('payroll-deduction').value = selectedEmpForDetail.deduction || 0;
+
+      calculatePayroll();
+      document.getElementById('modal-employee-detail').classList.remove('hidden');
+    }
+
+    function clearEmpPin() {
+      document.getElementById('emp-pin-edit').value = '';
+    }
+
+    function uploadEmployeeID(event) {
+      const file = event.target.files[0];
+      if(!file || !selectedEmpForDetail) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedEmpForDetail.idImage = e.target.result;
+        document.getElementById('emp-id-container').innerHTML = `<img src="${e.target.result}" class="max-h-32 mx-auto rounded-lg shadow-sm">`;
+        db.collection("users").doc(selectedEmpForDetail.id).update({ idImage: e.target.result });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function calculatePayroll() {
+      if(!selectedEmpForDetail) return;
+      const days = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      const rate = parseFloat(document.getElementById('payroll-day-rate').value) || 0;
+      const bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
+      const deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
+
+      const total = (days * rate) + bonus - deduction;
+      document.getElementById('payroll-total-display').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function saveEmployeePayrollDetails() {
+      if(!selectedEmpForDetail) return;
+
+      const newPin = document.getElementById('emp-pin-edit').value.trim();
+      if(newPin && (newPin.length !== 4 || isNaN(newPin))) {
+        return alert('El PIN debe contener exactamente 4 números.');
+      }
+      
+      if(newPin && users.some(u => String(u.id) !== String(selectedEmpForDetail.id) && u.pin === newPin)) {
+        return alert('Este PIN ya está en uso por otro empleado.');
+      }
+
+      db.collection("users").doc(selectedEmpForDetail.id).update({
+        pin: newPin || null,
+        dayRate: parseFloat(document.getElementById('payroll-day-rate').value) || 0,
+        bonus: parseFloat(document.getElementById('payroll-bonus').value) || 0,
+        deduction: parseFloat(document.getElementById('payroll-deduction').value) || 0
+      }).then(() => {
+        closeModal('modal-employee-detail');
+        alert('Expediente y PIN sincronizados con éxito en la nube.');
+      });
+    }
+
+    function printPayrollVoucher() {
+      if(!selectedEmpForDetail) return;
+
+      const days = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      const rate = selectedEmpForDetail.dayRate || 0;
+      const bonus = selectedEmpForDetail.bonus || 0;
+      const deduction = selectedEmpForDetail.deduction || 0;
+      const subtotalDays = days * rate;
+      const netTotal = subtotalDays + bonus - deduction;
+
+      document.getElementById('pay-print-date').innerText = new Date().toLocaleDateString();
+      document.getElementById('pay-print-name').innerText = selectedEmpForDetail.name;
+      document.getElementById('pay-print-role').innerText = selectedEmpForDetail.role;
+      document.getElementById('pay-print-days').innerText = `${days} días`;
+      document.getElementById('pay-print-rate').innerText = `$${rate.toFixed(2)}`;
+      document.getElementById('pay-print-subtotal').innerText = `$${subtotalDays.toFixed(2)}`;
+      document.getElementById('pay-print-bonus').innerText = `+$${bonus.toFixed(2)}`;
+      document.getElementById('pay-print-deduction').innerText = `-$${deduction.toFixed(2)}`;
+      document.getElementById('pay-print-total').innerText = `$${netTotal.toFixed(2)}`;
+
+      document.getElementById('modal-payroll-print').classList.remove('hidden');
+    }
+
+    function deleteUser(id) {
+      if(users.length <= 1) return alert('No puede eliminar al único usuario.');
+      if(confirm('¿Eliminar este empleado de la nube?')) {
+        db.collection("users").doc(id).delete();
+      }
+    }
+
+    // REPARACIONES & EDICIÓN NUBE
+    function renderRepairs() {
+      const grid = document.getElementById('repairs-grid');
+      grid.innerHTML = '';
+
+      repairs.forEach(r => {
+        const statusColors = {
+          'Pendiente': 'bg-amber-100 text-amber-800 border-amber-200',
+          'En Proceso': 'bg-blue-100 text-blue-800 border-blue-200',
+          'Listo': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+          'Entregado': 'bg-slate-100 text-slate-600 border-slate-200'
+        };
+
+        grid.innerHTML += `
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] font-mono text-slate-400 font-bold">${r.code || 'REP'}</span>
+                <h3 class="font-bold text-slate-900 text-sm">${r.device}</h3>
+              </div>
+              <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColors[r.status] || ''}">${r.status}</span>
+            </div>
+            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Cliente:</span> ${r.client}</p>
+            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Tel/WhatsApp:</span> ${r.phone || 'No registrado'}</p>
+            <p class="text-xs text-slate-600"><span class="font-bold text-slate-700">Falla:</span> ${r.issue}</p>
+            <div class="flex justify-between items-center border-t pt-3 gap-2">
+              <span class="font-extrabold text-emerald-600 text-sm">$${parseFloat(r.cost || 0).toFixed(2)}</span>
+              
+              <div class="flex items-center gap-1.5">
+                <button onclick="openEditRepairModal('${r.id}')" title="Editar Información" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+                </button>
+
+                <select onchange="updateRepairStatus('${r.id}', this.value)" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
+                  <option value="Pendiente" ${r.status==='Pendiente'?'selected':''}>Pendiente</option>
+                  <option value="En Proceso" ${r.status==='En Proceso'?'selected':''}>En Proceso</option>
+                  <option value="Listo" ${r.status==='Listo'?'selected':''}>Listo</option>
+                  <option value="Entregado" ${r.status==='Entregado'?'selected':''}>Entregado</option>
+                </select>
+
+                ${r.phone ? `
+                  <button onclick="sendWhatsAppNotification('${r.id}')" title="Notificar por WhatsApp" class="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function openAddRepairModal() { 
+      document.getElementById('repair-modal-title').innerText = 'Registrar Orden de Servicio';
+      document.getElementById('r-editing-id').value = '';
+      document.getElementById('r-client').value = '';
+      document.getElementById('r-phone').value = '';
+      document.getElementById('r-device').value = '';
+      document.getElementById('r-issue').value = '';
+      document.getElementById('r-cost').value = '';
+      document.getElementById('r-status').value = 'Pendiente';
+      document.getElementById('modal-repair').classList.remove('hidden'); 
+    }
+
+    function openEditRepairModal(repairId) {
+      const r = repairs.find(item => item.id === repairId);
+      if(!r) return;
+
+      document.getElementById('repair-modal-title').innerText = 'Editar Orden';
+      document.getElementById('r-editing-id').value = r.id;
+      document.getElementById('r-client').value = r.client || '';
+      document.getElementById('r-phone').value = r.phone || '';
+      document.getElementById('r-device').value = r.device || '';
+      document.getElementById('r-issue').value = r.issue || '';
+      document.getElementById('r-cost').value = r.cost || 0;
+      document.getElementById('r-status').value = r.status || 'Pendiente';
+
+      document.getElementById('modal-repair').classList.remove('hidden');
+    }
+    
+    function saveRepair() {
+      const editingId = document.getElementById('r-editing-id').value;
+      const client = document.getElementById('r-client').value;
+      const phone = document.getElementById('r-phone').value.replace(/[^0-9]/g, '');
+      const device = document.getElementById('r-device').value;
+      const issue = document.getElementById('r-issue').value;
+      const cost = parseFloat(document.getElementById('r-cost').value) || 0;
+      const status = document.getElementById('r-status').value;
+
+      if(!client || !device) return alert('Ingresa los datos requeridos.');
+
+      if(editingId) {
+        db.collection("repairs").doc(editingId).update({ client, phone, device, issue, cost, status });
+      } else {
+        db.collection("repairs").add({ 
+          code: 'R-' + Math.floor(100 + Math.random() * 900), 
+          client, phone, device, issue, cost, status 
+        });
+      }
+
+      closeModal('modal-repair');
+    }
+
+    function updateRepairStatus(id, newStatus) {
+      db.collection("repairs").doc(id).update({ status: newStatus });
+      const repair = repairs.find(r => r.id === id);
+      if(newStatus === 'Listo' && repair && repair.phone) {
+        if (confirm(`El servicio está LISTO. ¿Enviar notificación de WhatsApp al cliente (${repair.client})?`)) {
+          sendWhatsAppNotification(id);
+        }
+      }
+    }
+
+    function sendWhatsAppNotification(repairId) {
+      const r = repairs.find(item => item.id === repairId);
+      if(!r || !r.phone) return alert('No hay número de WhatsApp registrado.');
+
+      const message = `Hola ${r.client}! 👋 Le informamos desde LK SmartPhone Tecno que su equipo (${r.device}) ya se encuentra LISTO para retirar. Total: $${parseFloat(r.cost || 0).toFixed(2)}. ¡Le esperamos!`;
+      const encodedMsg = encodeURIComponent(message);
+      window.open(`https://wa.me/${r.phone}?text=${encodedMsg}`, '_blank');
+    }
+
+    // POS & INVENTARIO NUBE
+    function renderPosProducts() {
+      const query = document.getElementById('pos-search').value.toLowerCase();
+      const grid = document.getElementById('pos-products-grid');
+      grid.innerHTML = '';
+
+      inventory.filter(p => (activeCategory === 'All' || p.category === activeCategory) && (p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))))
+        .forEach(p => {
+          grid.innerHTML += `
+            <div onclick="addToCart('${p.id}')" class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-3 cursor-pointer hover:border-pink-500 hover:scale-[1.02] transition">
+              <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-pink-500/20 brand-pink uppercase">${p.category}</span>
+              <h4 class="font-bold text-white text-xs mt-2 line-clamp-1">${p.name}</h4>
+              <p class="text-[10px] text-slate-400 font-mono">${p.code || ''}</p>
+              <div class="flex justify-between items-center mt-3">
+                <span class="font-extrabold text-emerald-400 text-xs">$${parseFloat(p.price).toFixed(2)}</span>
+                <span class="text-[10px] font-bold ${p.stock < 3 ? 'text-rose-400' : 'text-slate-400'}">Stk: ${p.stock}</span>
+              </div>
+            </div>
+          `;
+        });
+    }
+
+    function addToCart(productId) {
+      const prod = inventory.find(p => p.id === productId);
+      if(!prod || prod.stock <= 0) return alert('Sin stock disponible');
+      const itemInCart = cart.find(item => item.id === productId);
+      if(itemInCart) {
+        if(itemInCart.qty < prod.stock) itemInCart.qty++;
+        else alert('Límite de stock alcanzado');
+      } else { cart.push({ ...prod, qty: 1 }); }
+      renderCart();
+    }
+
+    function updateCartQty(id, delta) {
+      const item = cart.find(i => i.id === id);
+      const prod = inventory.find(p => p.id === id);
+      if(item) {
+        item.qty += delta;
+        if(item.qty > prod.stock) item.qty = prod.stock;
+        if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+      }
+      renderCart();
+    }
+
+    function clearCart() { cart = []; renderCart(); }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items');
+      container.innerHTML = '';
+      let subtotal = 0;
+
+      if(cart.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-center py-10 text-xs">El carrito está vacío</p>`;
+      } else {
+        cart.forEach(item => {
+          subtotal += item.price * item.qty;
+          container.innerHTML += `
+            <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl text-xs border border-slate-100">
+              <div class="flex-1 pr-2">
+                <p class="font-bold text-slate-800 line-clamp-1">${item.name}</p>
+                <p class="text-[10px] text-slate-500">$${item.price.toFixed(2)} x ${item.qty}</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">-</button>
+                <span class="font-bold px-1">${item.qty}</span>
+                <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold">+</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('cart-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('cart-total').innerText = `$${subtotal.toFixed(2)}`;
+    }
+
+    function processCheckout() {
+      if(cart.length === 0) return alert('El carrito está vacío');
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const method = document.getElementById('cart-payment-method').value;
+      const saleCode = 'VEN-' + Math.floor(1000 + Math.random() * 9000);
+      const date = new Date().toLocaleString();
+
+      // Descontar stock en la Nube
+      cart.forEach(cartItem => {
+        const prod = inventory.find(p => p.id === cartItem.id);
+        if(prod) {
+          const newStock = Math.max(0, prod.stock - cartItem.qty);
+          db.collection("inventory").doc(prod.id).update({ stock: newStock });
+        }
+      });
+
+      // Registrar Venta
+      db.collection("sales").add({ code: saleCode, date, items: cart, total, method });
+
+      document.getElementById('rec-id').innerText = saleCode;
+      document.getElementById('rec-date').innerText = date;
+      document.getElementById('rec-method').innerText = method;
+      document.getElementById('rec-total').innerText = `$${total.toFixed(2)}`;
+
+      const recItems = document.getElementById('rec-items');
+      recItems.innerHTML = '';
+      cart.forEach(i => {
+        recItems.innerHTML += `<div class="flex justify-between"><span>${i.name} (x${i.qty})</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`;
+      });
+
+      clearCart();
+      document.getElementById('modal-receipt').classList.remove('hidden');
+    }
+
+    function renderInventory() {
+      const query = document.getElementById('inv-search').value.toLowerCase();
+      const tbody = document.getElementById('inventory-table-body');
+      tbody.innerHTML = '';
+
+      inventory.filter(p => p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query)))
+        .forEach(p => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-4 font-bold text-slate-800">${p.name}</td>
+              <td class="p-4"><span class="px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600">${p.category}</span></td>
+              <td class="p-4 text-slate-500 font-mono text-[11px]">${p.code || ''}</td>
+              <td class="p-4 font-extrabold text-emerald-600">$${parseFloat(p.price).toFixed(2)}</td>
+              <td class="p-4 font-bold ${p.stock < 3 ? 'text-rose-500' : 'text-slate-700'}">${p.stock}</td>
+              <td class="p-4 text-center admin-only">
+                ${currentUser && currentUser.role === 'Administrador' ? `<button onclick="deleteProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '-'}
+              </td>
+            </tr>
+          `;
+        });
+      lucide.createIcons();
+    }
+
+    function openAddProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
+    function saveProduct() {
+      const name = document.getElementById('p-name').value;
+      const category = document.getElementById('p-cat').value;
+      const code = document.getElementById('p-code').value;
+      const price = parseFloat(document.getElementById('p-price').value);
+      const stock = parseInt(document.getElementById('p-stock').value);
+
+      if(!name || isNaN(price)) return alert('Campos requeridos vacíos');
+      db.collection("inventory").add({ name, category, code, price, stock });
+      closeModal('modal-product');
+    }
+
+    function deleteProduct(id) {
+      if(confirm('¿Eliminar producto de la nube?')) { db.collection("inventory").doc(id).delete(); }
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById('history-table-body');
+      tbody.innerHTML = '';
+      sales.forEach(s => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 font-mono font-bold brand-pink text-xs">${s.code || 'VEN'}</td>
+            <td class="p-4 text-[11px] text-slate-500">${s.date}</td>
+            <td class="p-4 text-xs font-medium">${s.items ? s.items.map(i => `${i.name} (x${i.qty})`).join(', ') : ''}</td>
+            <td class="p-4 text-xs font-semibold">${s.method}</td>
+            <td class="p-4 font-extrabold text-emerald-600 text-xs">$${parseFloat(s.total || 0).toFixed(2)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderDashboard() {
+      const totalSalesToday = sales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+      const pendingRepairsCount = repairs.filter(r => r.status !== 'Entregado').length;
+      const lowStockCount = inventory.filter(p => p.stock < 3).length;
+
+      document.getElementById('dash-today-sales').innerText = `$${totalSalesToday.toFixed(2)}`;
+      document.getElementById('dash-pending-repairs').innerText = pendingRepairsCount;
+      document.getElementById('dash-low-stock').innerText = lowStockCount;
+      document.getElementById('dash-active-users').innerText = users.length;
+    }
+
+    // ESCÁNER Y UTILIDADES
+    function startCameraScanner(target) {
+      activeScanTarget = target;
+      document.getElementById('modal-scanner').classList.remove('hidden');
+
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("interactive-camera");
+
+      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        handleScannedCode(decodedText.trim());
+        stopCameraScanner();
+      }, () => {}).catch(err => {
+        alert("Error al abrir cámara: " + err);
+        stopCameraScanner();
+      });
+    }
+
+    function stopCameraScanner() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => document.getElementById('modal-scanner').classList.add('hidden')).catch(() => document.getElementById('modal-scanner').classList.add('hidden'));
+      } else {
+        document.getElementById('modal-scanner').classList.add('hidden');
+      }
+    }
+
+    function handleScannedCode(code) {
+      if (activeScanTarget === 'pos') {
+        const prod = inventory.find(p => p.code && p.code.toLowerCase() === code.toLowerCase());
+        if (prod) addToCart(prod.id);
+        else { document.getElementById('pos-search').value = code; renderPosProducts(); }
+      } else if (activeScanTarget === 'inventory') {
+        document.getElementById('inv-search').value = code;
+        renderInventory();
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-pink', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if(activeNav) {
+        activeNav.classList.remove('bg-slate-800', 'text-slate-300');
+        activeNav.classList.add('bg-brand-pink', 'text-white');
+      }
+
+      if(tabId === 'dashboard') renderDashboard();
+      if(tabId === 'pos') renderPosProducts();
+      if(tabId === 'inventory') renderInventory();
+      if(tabId === 'repairs') renderRepairs();
+      if(tabId === 'history') renderHistory();
+      if(tabId === 'users') renderUsers();
+    }
+
+    function filterPosCat(cat) { activeCategory = cat; renderPosProducts(); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    document.getElementById('pin-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') submitPin();
+    });
+
+    // Iniciar Sincronización al cargar la página
+    window.onload = function() {
+      initCloudSync();
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
   authDomain: "lk-smartphones-pos.firebaseapp.com",
   projectId: "lk-smartphones-pos",
   storageBucket: "lk-smartphones-pos.firebasestorage.app",
