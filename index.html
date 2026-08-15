@@ -312,26 +312,54 @@
 
   </main>
 
-  <!-- MODAL: EXPEDIENTE COMPLETO / PIN / NÓMINA DE EMPLEADO -->
+  <!-- MODAL: EXPEDIENTE COMPLETO / EDITABLE / PIN / NÓMINA -->
   <div id="modal-employee-detail" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex justify-between items-center border-b pb-3">
         <div>
-          <h3 id="emp-detail-name" class="font-bold text-base text-slate-900">Nombre del Empleado</h3>
-          <p id="emp-detail-role" class="text-slate-500">Rol</p>
+          <h3 id="emp-detail-name" class="font-bold text-base text-slate-900">Editar Empleado</h3>
+          <p id="emp-detail-role" class="text-slate-500">Expediente Completo</p>
         </div>
         <button onclick="closeModal('modal-employee-detail')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Información Personal & ID -->
-        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-          <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Documentación & Contacto</h4>
-          <p><span class="font-bold">Teléfono:</span> <span id="emp-detail-phone">-</span></p>
-          <p><span class="font-bold">Email:</span> <span id="emp-detail-email">-</span></p>
-          <p><span class="font-bold">Dirección:</span> <span id="emp-detail-address">-</span></p>
-          <p><span class="font-bold">Contacto Emergencia:</span> <span id="emp-detail-emergency">-</span></p>
+        <!-- Información Personal & ID Editables -->
+        <div class="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h4 class="font-bold text-slate-800 border-b pb-1 text-xs mb-2">Información del Empleado</h4>
           
+          <div>
+            <label class="block font-bold text-slate-700">Nombre Completo:</label>
+            <input type="text" id="emp-edit-name" class="w-full border rounded-lg p-1.5 text-xs bg-white focus:outline-none focus:border-pink-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-700">Teléfono:</label>
+              <input type="text" id="emp-edit-phone" class="w-full border rounded-lg p-1.5 text-xs bg-white">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700">Rol:</label>
+              <select id="emp-edit-role" class="w-full border rounded-lg p-1.5 text-xs bg-white">
+                <option value="Empleado">Empleado</option>
+                <option value="Administrador">Administrador</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700">Email:</label>
+            <input type="email" id="emp-edit-email" class="w-full border rounded-lg p-1.5 text-xs bg-white">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700">Dirección Residencial:</label>
+            <input type="text" id="emp-edit-address" class="w-full border rounded-lg p-1.5 text-xs bg-white">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700">Contacto de Emergencia:</label>
+            <input type="text" id="emp-edit-emergency" class="w-full border rounded-lg p-1.5 text-xs bg-white">
+          </div>
+
           <div class="pt-2">
             <p class="font-bold mb-1">Copia Documento de Identidad (ID):</p>
             <div id="emp-id-container" class="border rounded-xl p-2 bg-white text-center">
@@ -344,14 +372,18 @@
         <!-- Gestión de PIN & Asistencia -->
         <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Seguridad y PIN de Acceso</h4>
-          
-          <div class="space-y-2 bg-white p-3 rounded-lg border">
-            <label class="block font-bold text-slate-700">PIN Actual de 4 dígitos:</label>
+          apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
+  authDomain: "lk-smartphones-pos.firebaseapp.com",
+  projectId: "lk-smartphones-pos",
+  storageBucket: "lk-smartphones-pos.firebasestorage.app",
+  messagingSenderId: "942578519902",
+  appId: "1:942578519902:web:e01565a4c46299154189cf"          <div class="space-y-2 bg-white p-3 rounded-lg border">
+            <label class="block font-bold text-slate-700">PIN Actual (4 dígitos):</label>
             <div class="flex gap-2">
               <input type="text" id="emp-pin-edit" maxlength="4" placeholder="Ej. 1234" class="w-full border rounded-lg p-2 font-mono text-center font-bold text-sm">
               <button onclick="clearEmpPin()" class="px-2 bg-rose-100 text-rose-700 hover:bg-rose-200 font-bold rounded-lg shrink-0 text-[10px]">Borrar PIN</button>
             </div>
-            <p class="text-[10px] text-slate-400">Puedes modificarlo o reasignarlo en cualquier momento.</p>
+            <p class="text-[10px] text-slate-400">Puedes modificarlo o reasignarlo cuando quieras.</p>
           </div>
 
           <h4 class="font-bold text-slate-800 border-b pb-1 text-xs pt-2">Asistencia (Entradas por PIN)</h4>
@@ -390,7 +422,7 @@
         <button onclick="printPayrollVoucher()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
           <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante de Pago
         </button>
-        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold">Guardar Cambios de Expediente</button>
+        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">Guardar Cambios de Expediente</button>
       </div>
     </div>
   </div>
@@ -443,7 +475,7 @@
     </div>
   </div>
 
-  <!-- MODAL: REGISTRAR / EDITAR USUARIO -->
+  <!-- MODAL: REGISTRAR NUEVO USUARIO -->
   <div id="modal-user" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Nuevo Empleado</h3>
@@ -616,12 +648,12 @@
   <script>
     // ⚙️ PEGA TUS CREDENCIALES DE FIREBASE AQUÍ:
     const firebaseConfig = {
-      apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
-  authDomain: "lk-smartphones-pos.firebaseapp.com",
-  projectId: "lk-smartphones-pos",
-  storageBucket: "lk-smartphones-pos.firebasestorage.app",
-  messagingSenderId: "942578519902",
-  appId: "1:942578519902:web:e01565a4c46299154189cf"
+      apiKey: "AIzaSy...",
+      authDomain: "tu-proyecto.firebaseapp.com",
+      projectId: "tu-proyecto",
+      storageBucket: "tu-proyecto.appspot.com",
+      messagingSenderId: "123456789...",
+      appId: "1:123456789...:web:..."
     };
 
     // Inicializar Firebase
@@ -768,7 +800,7 @@
       stopCameraScanner();
     }
 
-    // RRHH, PIN & EXPEDIENTE
+    // RRHH, PIN & EXPEDIENTE EDITABLE (NUEVO)
     function renderUsers() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
@@ -802,7 +834,7 @@
             </td>
             <td class="p-4 text-center space-x-1">
               <button onclick="openEmployeeDetail('${u.id}')" class="px-2.5 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg font-bold text-[10px]">
-                Expediente / PIN / Nómina
+                Expediente / Editar Ficha
               </button>
               <button onclick="deleteUser('${u.id}')" title="Eliminar" class="text-rose-500 hover:text-rose-700 p-1">
                 <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
@@ -848,12 +880,13 @@
       selectedEmpForDetail = users.find(u => String(u.id) === String(empId));
       if(!selectedEmpForDetail) return alert('No se encontró la ficha del empleado.');
 
-      document.getElementById('emp-detail-name').innerText = selectedEmpForDetail.name;
-      document.getElementById('emp-detail-role').innerText = selectedEmpForDetail.role;
-      document.getElementById('emp-detail-phone').innerText = selectedEmpForDetail.phone || 'No registrado';
-      document.getElementById('emp-detail-email').innerText = selectedEmpForDetail.email || 'No registrado';
-      document.getElementById('emp-detail-address').innerText = selectedEmpForDetail.address || 'No registrada';
-      document.getElementById('emp-detail-emergency').innerText = selectedEmpForDetail.emergency || 'No registrado';
+      // Llenar campos editables con los datos actuales
+      document.getElementById('emp-edit-name').value = selectedEmpForDetail.name || '';
+      document.getElementById('emp-edit-phone').value = selectedEmpForDetail.phone || '';
+      document.getElementById('emp-edit-email').value = selectedEmpForDetail.email || '';
+      document.getElementById('emp-edit-address').value = selectedEmpForDetail.address || '';
+      document.getElementById('emp-edit-emergency').value = selectedEmpForDetail.emergency || '';
+      document.getElementById('emp-edit-role').value = selectedEmpForDetail.role || 'Empleado';
       document.getElementById('emp-pin-edit').value = selectedEmpForDetail.pin || '';
 
       const imgContainer = document.getElementById('emp-id-container');
@@ -915,7 +948,16 @@
     function saveEmployeePayrollDetails() {
       if(!selectedEmpForDetail) return;
 
+      const newName = document.getElementById('emp-edit-name').value.trim();
+      const newPhone = document.getElementById('emp-edit-phone').value.trim();
+      const newEmail = document.getElementById('emp-edit-email').value.trim();
+      const newAddress = document.getElementById('emp-edit-address').value.trim();
+      const newEmergency = document.getElementById('emp-edit-emergency').value.trim();
+      const newRole = document.getElementById('emp-edit-role').value;
       const newPin = document.getElementById('emp-pin-edit').value.trim();
+
+      if(!newName) return alert('El nombre del empleado no puede estar vacío.');
+
       if(newPin && (newPin.length !== 4 || isNaN(newPin))) {
         return alert('El PIN debe contener exactamente 4 números.');
       }
@@ -924,14 +966,21 @@
         return alert('Este PIN ya está en uso por otro empleado.');
       }
 
+      // Guardar todos los cambios actualizados en Firestore
       db.collection("users").doc(selectedEmpForDetail.id).update({
+        name: newName,
+        phone: newPhone,
+        email: newEmail,
+        address: newAddress,
+        emergency: newEmergency,
+        role: newRole,
         pin: newPin || null,
         dayRate: parseFloat(document.getElementById('payroll-day-rate').value) || 0,
         bonus: parseFloat(document.getElementById('payroll-bonus').value) || 0,
         deduction: parseFloat(document.getElementById('payroll-deduction').value) || 0
       }).then(() => {
         closeModal('modal-employee-detail');
-        alert('Expediente y PIN sincronizados con éxito en la nube.');
+        alert('¡Ficha del empleado actualizada con éxito en la nube!');
       });
     }
 
