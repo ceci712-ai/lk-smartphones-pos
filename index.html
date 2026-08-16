@@ -565,10 +565,11 @@
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR PRODUCTO -->
+  <!-- MODAL: AGREGAR / EDITAR PRODUCTO -->
   <div id="modal-product" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Agregar Nuevo Producto</h3>
+      <h3 id="product-modal-title" class="font-bold text-base text-slate-900 border-b pb-2">Agregar Nuevo Producto</h3>
+      <input type="hidden" id="p-editing-id" value="">
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-bold mb-1 text-slate-700">Nombre del Producto</label>
@@ -595,14 +596,14 @@
             <input type="number" step="0.01" id="p-price" class="w-full border rounded-xl p-2.5">
           </div>
           <div>
-            <label class="block font-bold mb-1 text-slate-700">Stock Inicial</label>
+            <label class="block font-bold mb-1 text-slate-700">Stock Initial / Actual</label>
             <input type="number" id="p-stock" class="w-full border rounded-xl p-2.5">
           </div>
         </div>
       </div>
       <div class="flex justify-end gap-2 border-t pt-3">
         <button onclick="closeModal('modal-product')" class="px-4 py-2 border rounded-xl text-slate-600 text-xs font-bold">Cancelar</button>
-        <button onclick="saveProduct()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar</button>
+        <button onclick="saveProduct()" class="px-4 py-2 bg-brand-pink text-white rounded-xl text-xs font-bold">Guardar Producto</button>
       </div>
     </div>
   </div>
@@ -724,11 +725,11 @@
 
     function seedDefaultUser() {
       db.collection("users").add({
-        name: 'Cecilyah Brito', 
+        name: 'Ninoska Brito Pineda', 
         email: 'admin@lksmartphone.com', 
-        phone: '(809) 555-0199',
-        address: 'Calle Principal #12',
-        emergency: 'Alex - (809) 555-0100',
+        phone: '(809) 773-8814',
+        address: 'Ramon Matias Mella',
+        emergency: '',
         role: 'Administrador', 
         pin: '9999', 
         joined: '2026-05-10',
@@ -748,7 +749,6 @@
       loginBtn.disabled = true;
 
       try {
-        // Consulta directa al servidor omitiendo caché local
         const snapshot = await db.collection("users").get({ source: "server" }).catch(() => db.collection("users").get());
         users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -1266,6 +1266,7 @@
 
       inventory.filter(p => p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query)))
         .forEach(p => {
+          const isAdmin = currentUser && currentUser.role === 'Administrador';
           tbody.innerHTML += `
             <tr class="hover:bg-slate-50">
               <td class="p-4 font-bold text-slate-800">${p.name}</td>
@@ -1273,8 +1274,15 @@
               <td class="p-4 text-slate-500 font-mono text-[11px]">${p.code || ''}</td>
               <td class="p-4 font-extrabold text-emerald-600">$${parseFloat(p.price).toFixed(2)}</td>
               <td class="p-4 font-bold ${p.stock < 3 ? 'text-rose-500' : 'text-slate-700'}">${p.stock}</td>
-              <td class="p-4 text-center admin-only">
-                ${currentUser && currentUser.role === 'Administrador' ? `<button onclick="deleteProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '-'}
+              <td class="p-4 text-center admin-only space-x-1">
+                ${isAdmin ? `
+                  <button onclick="openEditProductModal('${p.id}')" title="Editar Producto" class="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-bold">
+                    <i data-lucide="edit-3" class="w-4 h-4 inline"></i>
+                  </button>
+                  <button onclick="deleteProduct('${p.id}')" title="Eliminar Producto" class="p-1 text-rose-500 hover:text-rose-700">
+                    <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                  </button>
+                ` : '-'}
               </td>
             </tr>
           `;
@@ -1282,8 +1290,34 @@
       lucide.createIcons();
     }
 
-    function openAddProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
+    function openAddProductModal() { 
+      document.getElementById('product-modal-title').innerText = 'Agregar Nuevo Producto';
+      document.getElementById('p-editing-id').value = '';
+      document.getElementById('p-name').value = '';
+      document.getElementById('p-cat').value = 'Teléfonos';
+      document.getElementById('p-code').value = '';
+      document.getElementById('p-price').value = '';
+      document.getElementById('p-stock').value = '';
+      document.getElementById('modal-product').classList.remove('hidden'); 
+    }
+
+    function openEditProductModal(productId) {
+      const prod = inventory.find(p => p.id === productId);
+      if(!prod) return;
+
+      document.getElementById('product-modal-title').innerText = 'Editar Producto';
+      document.getElementById('p-editing-id').value = prod.id;
+      document.getElementById('p-name').value = prod.name || '';
+      document.getElementById('p-cat').value = prod.category || 'Teléfonos';
+      document.getElementById('p-code').value = prod.code || '';
+      document.getElementById('p-price').value = prod.price || 0;
+      document.getElementById('p-stock').value = prod.stock || 0;
+
+      document.getElementById('modal-product').classList.remove('hidden');
+    }
+
     function saveProduct() {
+      const editingId = document.getElementById('p-editing-id').value;
       const name = document.getElementById('p-name').value;
       const category = document.getElementById('p-cat').value;
       const code = document.getElementById('p-code').value;
@@ -1291,7 +1325,13 @@
       const stock = parseInt(document.getElementById('p-stock').value);
 
       if(!name || isNaN(price)) return alert('Campos requeridos vacíos');
-      db.collection("inventory").add({ name, category, code, price, stock });
+
+      if(editingId) {
+        db.collection("inventory").doc(editingId).update({ name, category, code, price, stock });
+      } else {
+        db.collection("inventory").add({ name, category, code, price, stock });
+      }
+
       closeModal('modal-product');
     }
 
