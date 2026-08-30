@@ -279,12 +279,12 @@
       </div>
     </section>
 
-    <!-- 6. GESTIÓN DE PERSONAL & RRHH -->
+    <!-- 6. GESTIÓN DE PERSONAL & RRHH CON EDICIÓN DE NÓMINA -->
     <section id="tab-users" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
         <div>
-          <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina Quincenal</h2>
-          <p class="text-[11px] text-slate-400">Fichas de empleados, marcaciones administrativas, quincenas, bonos y descuentos</p>
+          <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina Editable</h2>
+          <p class="text-[11px] text-slate-400">Fichas de empleados, días trabajados, libres, faltas, quincenas y ajustes de nómina</p>
         </div>
         <button onclick="openInviteUserModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
           <i data-lucide="user-plus"></i> Registrar Empleado
@@ -297,9 +297,8 @@
             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase font-bold">
               <th class="p-4">Empleado</th>
               <th class="p-4">Contacto & Dirección</th>
-              <th class="p-4">Emergencia</th>
-              <th class="p-4">Rol / PIN</th>
-              <th class="p-4 text-center">Asistencia Hoy</th>
+              <th class="p-4">Asistencia Hoy</th>
+              <th class="p-4 text-center">Trabajados / Libres / Faltas</th>
               <th class="p-4 text-center">Acciones / Ficha</th>
             </tr>
           </thead>
@@ -312,9 +311,9 @@
 
   </main>
 
-  <!-- MODAL: EXPEDIENTE COMPLETO / EDITABLE / PIN / NÓMINA AVANZADA -->
+  <!-- MODAL: EXPEDIENTE COMPLETO / EDITABLE / PIN / NÓMINA EDITABLE MANUAL -->
   <div id="modal-employee-detail" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex justify-between items-center border-b pb-3">
         <div>
           <h3 id="emp-detail-name" class="font-bold text-base text-slate-900">Editar Empleado</h3>
@@ -369,7 +368,7 @@
           </div>
         </div>
 
-        <!-- Gestión de PIN & Asistencia con Marcación Manual -->
+        <!-- CONTROL DE ASISTENCIA, DÍAS LIBRES, FALTAS Y PIN -->
         <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Seguridad y PIN de Acceso</h4>
           apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
@@ -386,71 +385,78 @@
             </div>
           </div>
 
-          <!-- MARCACIÓN DE FECHAS DE TRABAJO Y ASISTENCIA ADMIN -->
+          <!-- DÍAS TRABAJADOS, LIBRES Y FALTAS -->
           <div class="border-t pt-2 space-y-2">
-            <h4 class="font-bold text-slate-800 text-xs flex justify-between items-center">
-              <span>Asistencia & Registro de Fechas</span>
-              <span id="emp-days-count" class="text-emerald-600 font-bold text-[11px]">0 días</span>
-            </h4>
-            
-            <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 space-y-1.5">
-              <p class="text-[10px] text-amber-900 font-bold">Marcar Presencia Manual / Añadir Fecha</p>
+            <h4 class="font-bold text-slate-800 text-xs">Control de Asistencia & Ausencias</h4>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                <p class="text-[9px] text-emerald-800 font-bold uppercase">Trabajados</p>
+                <input type="number" id="emp-edit-days-worked" oninput="calculatePayroll()" class="w-full border rounded p-1 text-center font-bold text-xs bg-white">
+              </div>
+              <div class="bg-blue-50 p-2 rounded-lg border border-blue-200">
+                <p class="text-[9px] text-blue-800 font-bold uppercase">Libres</p>
+                <input type="number" id="emp-edit-days-off" class="w-full border rounded p-1 text-center font-bold text-xs bg-white">
+              </div>
+              <div class="bg-rose-50 p-2 rounded-lg border border-rose-200">
+                <p class="text-[9px] text-rose-800 font-bold uppercase">Faltas</p>
+                <input type="number" id="emp-edit-days-absent" class="w-full border rounded p-1 text-center font-bold text-xs bg-white">
+              </div>
+            </div>
+
+            <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 space-y-1.5 mt-2">
+              <p class="text-[10px] text-amber-900 font-bold">Añadir Fecha Específica de Trabajo</p>
               <div class="flex gap-1.5">
                 <input type="date" id="manual-attendance-date" class="border rounded-lg p-1 text-[11px] bg-white flex-1">
                 <button onclick="addManualAttendanceDate()" class="bg-amber-600 text-white font-bold px-2 py-1 rounded-lg text-[10px] hover:bg-amber-700">
-                  + Registrar Fecha
+                  + Agregar Fecha
                 </button>
               </div>
             </div>
 
-            <div class="max-h-24 overflow-y-auto border rounded-lg p-2 bg-white space-y-1 font-mono text-[10px]" id="emp-attendance-log">
+            <div class="max-h-20 overflow-y-auto border rounded-lg p-2 bg-white space-y-1 font-mono text-[10px]" id="emp-attendance-log">
               <!-- Log de marcaciones -->
             </div>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN DE NÓMINA, QUINCENAS, BONOS, DESCUENTOS Y AJUSTES -->
+      <!-- SECCIÓN DE NÓMINA COMPLETAMENTE EDITABLE MANUALMENTE -->
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
         <h4 class="font-bold text-slate-800 border-b pb-1 text-xs flex justify-between items-center">
-          <span>Cálculo de Nómina Quincenal</span>
-          <select id="payroll-quincena-select" onchange="calculatePayroll()" class="text-[10px] border rounded p-1 bg-white font-semibold">
-            <option value="all">Todas las Fechas</option>
-            <option value="q1">Primera Quincena (Días 1 - 15)</option>
-            <option value="q2">Segunda Quincena (Días 16 - Fin)</option>
-          </select>
+          <span>Edición Manual de Categórías de Nómina</span>
+          <span class="text-[10px] text-slate-500 font-normal">Modifica cualquier valor manualmente</span>
         </h4>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
-            <label class="block font-bold mb-1 text-[11px]">Pago por Día ($)</label>
-            <input type="number" step="0.01" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-1.5 text-xs">
+            <label class="block font-bold mb-1 text-[11px] text-slate-700">Pago por Día ($)</label>
+            <input type="number" step="0.01" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-2 text-xs font-bold bg-white">
           </div>
           <div>
-            <label class="block font-bold mb-1 text-[11px]">Bonos / Comisiones ($)</label>
-            <input type="number" step="0.01" id="payroll-bonus" oninput="calculatePayroll()" class="w-full border rounded-lg p-1.5 text-xs">
+            <label class="block font-bold mb-1 text-[11px] text-emerald-700">Bonos y Comisiones ($)</label>
+            <input type="number" step="0.01" id="payroll-bonus" oninput="calculatePayroll()" class="w-full border border-emerald-300 rounded-lg p-2 text-xs font-bold bg-emerald-50/50">
           </div>
           <div>
-            <label class="block font-bold mb-1 text-[11px]">Descuentos / Adelantos ($)</label>
-            <input type="number" step="0.01" id="payroll-deduction" oninput="calculatePayroll()" class="w-full border rounded-lg p-1.5 text-xs">
+            <label class="block font-bold mb-1 text-[11px] text-rose-700">Descuentos ($)</label>
+            <input type="number" step="0.01" id="payroll-deduction" oninput="calculatePayroll()" class="w-full border border-rose-300 rounded-lg p-2 text-xs font-bold bg-rose-50/50">
           </div>
           <div>
-            <label class="block font-bold mb-1 text-[11px]">Ajustes de Saldo ($)</label>
-            <input type="number" step="0.01" id="payroll-adjustment" oninput="calculatePayroll()" placeholder="Ej: +/- 10.00" class="w-full border rounded-lg p-1.5 text-xs">
+            <label class="block font-bold mb-1 text-[11px] text-blue-700">Quincena ($)</label>
+            <input type="number" step="0.01" id="payroll-quincena" oninput="calculatePayrollFromQuincena()" class="w-full border border-blue-300 rounded-lg p-2 text-xs font-bold bg-blue-50/50" placeholder="Auto o Manual">
           </div>
         </div>
 
         <div class="flex justify-between items-center pt-2 border-t font-bold text-sm">
-          <span class="text-xs text-slate-600">Total NETO Calculado:</span>
+          <span class="text-xs text-slate-600">Total NETO Final a Pagar:</span>
           <span id="payroll-total-display" class="brand-pink text-base font-black">$0.00</span>
         </div>
       </div>
 
       <div class="flex justify-between gap-2 border-t pt-3">
         <button onclick="printPayrollVoucher()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
-          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante Quincenal
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante de Pago
         </button>
-        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">Guardar Ficha y Ajustes</button>
+        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">Guardar Ficha y Cambios</button>
       </div>
     </div>
   </div>
@@ -467,14 +473,13 @@
         <p>Fecha: <span id="pay-print-date"></span></p>
         <p>Empleado: <span id="pay-print-name" class="font-bold"></span></p>
         <p>Cargo: <span id="pay-print-role"></span></p>
-        <p>Período: <span id="pay-print-period" class="font-bold"></span></p>
         <p class="text-[9px] text-slate-400">------------------------------------</p>
         <p class="flex justify-between"><span>Días Trabajados:</span><span id="pay-print-days"></span></p>
+        <p class="flex justify-between"><span>Días Libres / Faltas:</span><span id="pay-print-off-absent"></span></p>
         <p class="flex justify-between"><span>Tarifa por Día:</span><span id="pay-print-rate"></span></p>
-        <p class="flex justify-between"><span>Subtotal Días:</span><span id="pay-print-subtotal"></span></p>
-        <p class="flex justify-between text-emerald-600"><span>Bonos / Comisiones:</span><span id="pay-print-bonus"></span></p>
-        <p class="flex justify-between text-rose-600"><span>Descuentos / Adelantos:</span><span id="pay-print-deduction"></span></p>
-        <p class="flex justify-between text-blue-600"><span>Ajustes Especiales:</span><span id="pay-print-adjustment"></span></p>
+        <p class="flex justify-between text-blue-600 font-bold"><span>Quincena Base:</span><span id="pay-print-quincena"></span></p>
+        <p class="flex justify-between text-emerald-600"><span>Bonos y Comisiones:</span><span id="pay-print-bonus"></span></p>
+        <p class="flex justify-between text-rose-600"><span>Descuentos:</span><span id="pay-print-deduction"></span></p>
         <p class="text-[9px] text-slate-400">------------------------------------</p>
         <p class="flex justify-between font-bold text-xs"><span>NETO PAGADO:</span><span id="pay-print-total"></span></p>
         
@@ -768,8 +773,10 @@
         pin: '9999', 
         joined: '2026-05-10',
         attendance: [],
+        daysOff: 0,
+        daysAbsent: 0,
         idImage: null,
-        dayRate: 50.00, bonus: 0, deduction: 0, adjustment: 0
+        dayRate: 50.00, bonus: 0, deduction: 0, quincena: 0
       });
     }
 
@@ -848,7 +855,7 @@
       stopCameraScanner();
     }
 
-    // RRHH, PIN & EXPEDIENTE EDITABLE
+    // RRHH, PIN & EXPEDIENTE EDITABLE Y ASISTENCIA
     function renderUsers() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
@@ -860,6 +867,9 @@
           : 'bg-blue-100 text-blue-800 border-blue-200';
 
         const hasAttendedToday = (u.attendance || []).some(entry => entry.startsWith(todayStr));
+        const daysWorked = u.attendance ? u.attendance.length : 0;
+        const daysOff = u.daysOff || 0;
+        const daysAbsent = u.daysAbsent || 0;
 
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50">
@@ -871,13 +881,6 @@
               <p>📞 ${u.phone || 'Sin tel.'}</p>
               <p class="text-[10px] text-slate-400">🏠 ${u.address || 'Sin dirección'}</p>
             </td>
-            <td class="p-4 text-slate-600 text-[11px] font-medium">
-              🚨 ${u.emergency || 'No especificado'}
-            </td>
-            <td class="p-4">
-              <span class="px-2 py-0.5 rounded-full border text-[9px] font-bold ${roleBadge}">${u.role}</span>
-              <p class="text-[10px] font-mono font-bold text-slate-500 mt-1">PIN: ${u.pin ? '•••• (' + u.pin + ')' : 'Sin PIN'}</p>
-            </td>
             <td class="p-4 text-center">
               ${hasAttendedToday ? `
                 <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">✓ Presente</span>
@@ -886,6 +889,11 @@
                   + Marcar Presente
                 </button>
               `}
+            </td>
+            <td class="p-4 text-center text-xs">
+              <span class="font-bold text-emerald-600">${daysWorked} T</span> / 
+              <span class="font-bold text-blue-600">${daysOff} L</span> / 
+              <span class="font-bold text-rose-600">${daysAbsent} F</span>
             </td>
             <td class="p-4 text-center space-x-1">
               <button onclick="openEmployeeDetail('${u.id}')" class="px-2.5 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg font-bold text-[10px]">
@@ -924,8 +932,10 @@
         pin: pin || null, 
         joined: new Date().toISOString().split('T')[0],
         attendance: [],
+        daysOff: 0,
+        daysAbsent: 0,
         idImage: null,
-        dayRate: 0, bonus: 0, deduction: 0, adjustment: 0
+        dayRate: 0, bonus: 0, deduction: 0, quincena: 0
       });
 
       closeModal('modal-user');
@@ -954,6 +964,10 @@
       document.getElementById('emp-edit-role').value = selectedEmpForDetail.role || 'Empleado';
       document.getElementById('emp-pin-edit').value = selectedEmpForDetail.pin || '';
 
+      document.getElementById('emp-edit-days-worked').value = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      document.getElementById('emp-edit-days-off').value = selectedEmpForDetail.daysOff || 0;
+      document.getElementById('emp-edit-days-absent').value = selectedEmpForDetail.daysAbsent || 0;
+
       const imgContainer = document.getElementById('emp-id-container');
       if(selectedEmpForDetail.idImage) {
         imgContainer.innerHTML = `<img src="${selectedEmpForDetail.idImage}" class="max-h-32 mx-auto rounded-lg shadow-sm">`;
@@ -966,8 +980,10 @@
       document.getElementById('payroll-day-rate').value = selectedEmpForDetail.dayRate || 0;
       document.getElementById('payroll-bonus').value = selectedEmpForDetail.bonus || 0;
       document.getElementById('payroll-deduction').value = selectedEmpForDetail.deduction || 0;
-      document.getElementById('payroll-adjustment').value = selectedEmpForDetail.adjustment || 0;
-      document.getElementById('payroll-quincena-select').value = 'all';
+      
+      const rate = parseFloat(selectedEmpForDetail.dayRate || 0);
+      const daysWorked = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      document.getElementById('payroll-quincena').value = selectedEmpForDetail.quincena || (rate * daysWorked);
 
       calculatePayroll();
       document.getElementById('modal-employee-detail').classList.remove('hidden');
@@ -975,8 +991,6 @@
 
     function renderAttendanceLogs() {
       if(!selectedEmpForDetail) return;
-      const daysCount = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
-      document.getElementById('emp-days-count').innerText = `${daysCount} días`;
 
       const logContainer = document.getElementById('emp-attendance-log');
       logContainer.innerHTML = '';
@@ -1004,6 +1018,8 @@
       updatedAttendance.push(formattedEntry);
 
       selectedEmpForDetail.attendance = updatedAttendance;
+      document.getElementById('emp-edit-days-worked').value = updatedAttendance.length;
+
       db.collection("users").doc(selectedEmpForDetail.id).update({ attendance: updatedAttendance });
       renderAttendanceLogs();
       calculatePayroll();
@@ -1014,6 +1030,8 @@
       let updatedAttendance = selectedEmpForDetail.attendance || [];
       updatedAttendance.splice(index, 1);
       selectedEmpForDetail.attendance = updatedAttendance;
+      document.getElementById('emp-edit-days-worked').value = updatedAttendance.length;
+
       db.collection("users").doc(selectedEmpForDetail.id).update({ attendance: updatedAttendance });
       renderAttendanceLogs();
       calculatePayroll();
@@ -1036,34 +1054,30 @@
       reader.readAsDataURL(file);
     }
 
-    function filterAttendanceByQuincena(attendanceList, mode) {
-      if(!attendanceList) return [];
-      if(mode === 'all') return attendanceList;
-
-      return attendanceList.filter(entry => {
-        const parts = entry.split(' ')[0].split('-');
-        if(parts.length >= 3) {
-          const day = parseInt(parts[2], 10);
-          if(mode === 'q1') return day >= 1 && day <= 15;
-          if(mode === 'q2') return day >= 16;
-        }
-        return true;
-      });
-    }
-
+    // CÁLCULO Y EDICIÓN MANUAL DE NÓMINA
     function calculatePayroll() {
-      if(!selectedEmpForDetail) return;
-      const quincenaMode = document.getElementById('payroll-quincena-select').value;
-      const filteredDays = filterAttendanceByQuincena(selectedEmpForDetail.attendance, quincenaMode);
-      
-      const days = filteredDays.length;
+      const daysWorked = parseFloat(document.getElementById('emp-edit-days-worked').value) || 0;
       const rate = parseFloat(document.getElementById('payroll-day-rate').value) || 0;
       const bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
       const deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
-      const adjustment = parseFloat(document.getElementById('payroll-adjustment').value) || 0;
 
-      const total = (days * rate) + bonus - deduction + adjustment;
-      document.getElementById('payroll-total-display').innerText = `$${total.toFixed(2)}`;
+      // Calcular Quincena por defecto si el campo está en blanco o se modifican los días
+      const quincenaCalc = rate * daysWorked;
+      const quincenaInput = document.getElementById('payroll-quincena');
+      
+      if (!quincenaInput.dataset.userEdited) {
+        quincenaInput.value = quincenaCalc.toFixed(2);
+      }
+
+      const quincenaVal = parseFloat(quincenaInput.value) || 0;
+      const totalNeto = quincenaVal + bonus - deduction;
+
+      document.getElementById('payroll-total-display').innerText = `$${totalNeto.toFixed(2)}`;
+    }
+
+    function calculatePayrollFromQuincena() {
+      document.getElementById('payroll-quincena').dataset.userEdited = "true";
+      calculatePayroll();
     }
 
     function saveEmployeePayrollDetails() {
@@ -1076,6 +1090,9 @@
       const newEmergency = document.getElementById('emp-edit-emergency').value.trim();
       const newRole = document.getElementById('emp-edit-role').value;
       const newPin = document.getElementById('emp-pin-edit').value.trim();
+
+      const daysOff = parseInt(document.getElementById('emp-edit-days-off').value) || 0;
+      const daysAbsent = parseInt(document.getElementById('emp-edit-days-absent').value) || 0;
 
       if(!newName) return alert('El nombre del empleado no puede estar vacío.');
 
@@ -1095,43 +1112,42 @@
         emergency: newEmergency,
         role: newRole,
         pin: newPin || null,
+        daysOff,
+        daysAbsent,
         dayRate: parseFloat(document.getElementById('payroll-day-rate').value) || 0,
         bonus: parseFloat(document.getElementById('payroll-bonus').value) || 0,
         deduction: parseFloat(document.getElementById('payroll-deduction').value) || 0,
-        adjustment: parseFloat(document.getElementById('payroll-adjustment').value) || 0
+        quincena: parseFloat(document.getElementById('payroll-quincena').value) || 0
       }).then(() => {
+        delete document.getElementById('payroll-quincena').dataset.userEdited;
         closeModal('modal-employee-detail');
-        alert('¡Ficha y configuración de nómina actualizadas con éxito!');
+        alert('¡Ficha de empleado y ajustes de nómina actualizados!');
       });
     }
 
     function printPayrollVoucher() {
       if(!selectedEmpForDetail) return;
 
-      const quincenaMode = document.getElementById('payroll-quincena-select').value;
-      const filteredDays = filterAttendanceByQuincena(selectedEmpForDetail.attendance, quincenaMode);
+      const daysWorked = parseFloat(document.getElementById('emp-edit-days-worked').value) || 0;
+      const daysOff = parseInt(document.getElementById('emp-edit-days-off').value) || 0;
+      const daysAbsent = parseInt(document.getElementById('emp-edit-days-absent').value) || 0;
 
-      const days = filteredDays.length;
       const rate = parseFloat(document.getElementById('payroll-day-rate').value) || 0;
+      const quincena = parseFloat(document.getElementById('payroll-quincena').value) || 0;
       const bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
       const deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
-      const adjustment = parseFloat(document.getElementById('payroll-adjustment').value) || 0;
       
-      const subtotalDays = days * rate;
-      const netTotal = subtotalDays + bonus - deduction + adjustment;
-
-      const periodText = quincenaMode === 'q1' ? '1ra Quincena' : (quincenaMode === 'q2' ? '2da Quincena' : 'Período Completo');
+      const netTotal = quincena + bonus - deduction;
 
       document.getElementById('pay-print-date').innerText = new Date().toLocaleDateString();
       document.getElementById('pay-print-name').innerText = selectedEmpForDetail.name;
       document.getElementById('pay-print-role').innerText = selectedEmpForDetail.role;
-      document.getElementById('pay-print-period').innerText = periodText;
-      document.getElementById('pay-print-days').innerText = `${days} días`;
+      document.getElementById('pay-print-days').innerText = `${daysWorked} días`;
+      document.getElementById('pay-print-off-absent').innerText = `${daysOff} L / ${daysAbsent} F`;
       document.getElementById('pay-print-rate').innerText = `$${rate.toFixed(2)}`;
-      document.getElementById('pay-print-subtotal').innerText = `$${subtotalDays.toFixed(2)}`;
+      document.getElementById('pay-print-quincena').innerText = `$${quincena.toFixed(2)}`;
       document.getElementById('pay-print-bonus').innerText = `+$${bonus.toFixed(2)}`;
       document.getElementById('pay-print-deduction').innerText = `-$${deduction.toFixed(2)}`;
-      document.getElementById('pay-print-adjustment').innerText = `$${adjustment.toFixed(2)}`;
       document.getElementById('pay-print-total').innerText = `$${netTotal.toFixed(2)}`;
 
       document.getElementById('modal-payroll-print').classList.remove('hidden');
