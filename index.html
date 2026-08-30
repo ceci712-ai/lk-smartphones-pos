@@ -48,7 +48,7 @@
         <input type="password" id="pin-input" maxlength="4" placeholder="••••" autofocus
                class="w-full text-center text-3xl font-bold tracking-widest py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:outline-none">
 
-        <button onclick="submitPin()" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+        <button id="login-submit-btn" onclick="submitPin()" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
           Marcar Entrada / Ingresar
         </button>
       </div>
@@ -371,12 +371,7 @@
         <!-- CONTROL DE ASISTENCIA, DÍAS LIBRES, FALTAS Y PIN -->
         <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Seguridad y PIN de Acceso</h4>
-          apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
-  authDomain: "lk-smartphones-pos.firebaseapp.com",
-  projectId: "lk-smartphones-pos",
-  storageBucket: "lk-smartphones-pos.firebasestorage.app",
-  messagingSenderId: "942578519902",
-  appId: "1:942578519902:web:e01565a4c46299154189cf"
+          
           <div class="space-y-2 bg-white p-3 rounded-lg border">
             <label class="block font-bold text-slate-700">PIN Actual (4 dígitos):</label>
             <div class="flex gap-2">
@@ -402,7 +397,12 @@
                 <input type="number" id="emp-edit-days-absent" class="w-full border rounded p-1 text-center font-bold text-xs bg-white">
               </div>
             </div>
-
+apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
+  authDomain: "lk-smartphones-pos.firebaseapp.com",
+  projectId: "lk-smartphones-pos",
+  storageBucket: "lk-smartphones-pos.firebasestorage.app",
+  messagingSenderId: "942578519902",
+  appId: "1:942578519902:web:e01565a4c46299154189cf"
             <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 space-y-1.5 mt-2">
               <p class="text-[10px] text-amber-900 font-bold">Añadir Fecha Específica de Trabajo</p>
               <div class="flex gap-1.5">
@@ -423,7 +423,7 @@
       <!-- SECCIÓN DE NÓMINA COMPLETAMENTE EDITABLE MANUALMENTE -->
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
         <h4 class="font-bold text-slate-800 border-b pb-1 text-xs flex justify-between items-center">
-          <span>Edición Manual de Categórías de Nómina</span>
+          <span>Edición Manual de Categorías de Nómina</span>
           <span class="text-[10px] text-slate-500 font-normal">Modifica cualquier valor manualmente</span>
         </h4>
 
@@ -780,17 +780,17 @@
       });
     }
 
-    // AUTENTICACIÓN DIRECTA A SERVIDOR
+    // AUTENTICACIÓN FIRESTORE CORREGIDA
     async function submitPin() {
       const enteredPin = document.getElementById('pin-input').value.trim();
       if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
 
-      const loginBtn = document.querySelector("#login-modal button");
+      const loginBtn = document.getElementById("login-submit-btn");
       loginBtn.innerText = "Verificando...";
       loginBtn.disabled = true;
 
       try {
-        const snapshot = await db.collection("users").get({ source: "server" }).catch(() => db.collection("users").get());
+        const snapshot = await db.collection("users").get();
         users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const foundUser = users.find(u => String(u.pin) === String(enteredPin));
@@ -814,6 +814,7 @@
           document.getElementById('pin-input').value = '';
         }
       } catch (error) {
+        console.error("Error en submitPin:", error);
         alert('Error al conectar con la nube. Verifique su conexión a internet.');
       } finally {
         loginBtn.innerText = "Marcar Entrada / Ingresar";
@@ -1061,7 +1062,6 @@
       const bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
       const deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
 
-      // Calcular Quincena por defecto si el campo está en blanco o se modifican los días
       const quincenaCalc = rate * daysWorked;
       const quincenaInput = document.getElementById('payroll-quincena');
       
