@@ -283,8 +283,8 @@
     <section id="tab-users" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
         <div>
-          <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina</h2>
-          <p class="text-[11px] text-slate-400">Fichas de empleados, identidades, PINs, registros de trabajo y recibos de pago</p>
+          <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina Quincenal</h2>
+          <p class="text-[11px] text-slate-400">Fichas de empleados, marcaciones administrativas, quincenas, bonos y descuentos</p>
         </div>
         <button onclick="openInviteUserModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
           <i data-lucide="user-plus"></i> Registrar Empleado
@@ -299,7 +299,7 @@
               <th class="p-4">Contacto & Dirección</th>
               <th class="p-4">Emergencia</th>
               <th class="p-4">Rol / PIN</th>
-              <th class="p-4 text-center">Días Trabajados</th>
+              <th class="p-4 text-center">Asistencia Hoy</th>
               <th class="p-4 text-center">Acciones / Ficha</th>
             </tr>
           </thead>
@@ -312,7 +312,7 @@
 
   </main>
 
-  <!-- MODAL: EXPEDIENTE COMPLETO / EDITABLE / PIN / NÓMINA -->
+  <!-- MODAL: EXPEDIENTE COMPLETO / EDITABLE / PIN / NÓMINA AVANZADA -->
   <div id="modal-employee-detail" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex justify-between items-center border-b pb-3">
@@ -369,56 +369,88 @@
           </div>
         </div>
 
-        <!-- Gestión de PIN & Asistencia -->
+        <!-- Gestión de PIN & Asistencia con Marcación Manual -->
         <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Seguridad y PIN de Acceso</h4>
-          
+          apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
+  authDomain: "lk-smartphones-pos.firebaseapp.com",
+  projectId: "lk-smartphones-pos",
+  storageBucket: "lk-smartphones-pos.firebasestorage.app",
+  messagingSenderId: "942578519902",
+  appId: "1:942578519902:web:e01565a4c46299154189cf"
           <div class="space-y-2 bg-white p-3 rounded-lg border">
             <label class="block font-bold text-slate-700">PIN Actual (4 dígitos):</label>
             <div class="flex gap-2">
               <input type="text" id="emp-pin-edit" maxlength="4" placeholder="Ej. 1234" class="w-full border rounded-lg p-2 font-mono text-center font-bold text-sm">
               <button onclick="clearEmpPin()" class="px-2 bg-rose-100 text-rose-700 hover:bg-rose-200 font-bold rounded-lg shrink-0 text-[10px]">Borrar PIN</button>
             </div>
-            <p class="text-[10px] text-slate-400">Puedes modificarlo o reasignarlo cuando quieras.</p>
           </div>
 
-          <h4 class="font-bold text-slate-800 border-b pb-1 text-xs pt-2">Asistencia (Entradas por PIN)</h4>
-          <p><span class="font-bold">Total Días Trabajados:</span> <span id="emp-days-count" class="font-bold text-emerald-600">0 días</span></p>
-          <div class="max-h-28 overflow-y-auto border rounded-lg p-2 bg-white space-y-1 font-mono text-[10px]" id="emp-attendance-log">
-            <!-- Log de marcaciones -->
+          <!-- MARCACIÓN DE FECHAS DE TRABAJO Y ASISTENCIA ADMIN -->
+          <div class="border-t pt-2 space-y-2">
+            <h4 class="font-bold text-slate-800 text-xs flex justify-between items-center">
+              <span>Asistencia & Registro de Fechas</span>
+              <span id="emp-days-count" class="text-emerald-600 font-bold text-[11px]">0 días</span>
+            </h4>
+            
+            <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 space-y-1.5">
+              <p class="text-[10px] text-amber-900 font-bold">Marcar Presencia Manual / Añadir Fecha</p>
+              <div class="flex gap-1.5">
+                <input type="date" id="manual-attendance-date" class="border rounded-lg p-1 text-[11px] bg-white flex-1">
+                <button onclick="addManualAttendanceDate()" class="bg-amber-600 text-white font-bold px-2 py-1 rounded-lg text-[10px] hover:bg-amber-700">
+                  + Registrar Fecha
+                </button>
+              </div>
+            </div>
+
+            <div class="max-h-24 overflow-y-auto border rounded-lg p-2 bg-white space-y-1 font-mono text-[10px]" id="emp-attendance-log">
+              <!-- Log de marcaciones -->
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Sección de Nómina y Pagos -->
+      <!-- SECCIÓN DE NÓMINA, QUINCENAS, BONOS, DESCUENTOS Y AJUSTES -->
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-        <h4 class="font-bold text-slate-800 border-b pb-1 text-xs">Cálculo de Nómina & Pagos</h4>
-        <div class="grid grid-cols-3 gap-3">
+        <h4 class="font-bold text-slate-800 border-b pb-1 text-xs flex justify-between items-center">
+          <span>Cálculo de Nómina Quincenal</span>
+          <select id="payroll-quincena-select" onchange="calculatePayroll()" class="text-[10px] border rounded p-1 bg-white font-semibold">
+            <option value="all">Todas las Fechas</option>
+            <option value="q1">Primera Quincena (Días 1 - 15)</option>
+            <option value="q2">Segunda Quincena (Días 16 - Fin)</option>
+          </select>
+        </h4>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div>
-            <label class="block font-bold mb-1">Pago por Día ($)</label>
-            <input type="number" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
+            <label class="block font-bold mb-1 text-[11px]">Pago por Día ($)</label>
+            <input type="number" step="0.01" id="payroll-day-rate" oninput="calculatePayroll()" class="w-full border rounded-lg p-1.5 text-xs">
           </div>
           <div>
-            <label class="block font-bold mb-1">Bonos / Comisiones ($)</label>
-            <input type="number" id="payroll-bonus" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
+            <label class="block font-bold mb-1 text-[11px]">Bonos / Comisiones ($)</label>
+            <input type="number" step="0.01" id="payroll-bonus" oninput="calculatePayroll()" class="w-full border rounded-lg p-1.5 text-xs">
           </div>
           <div>
-            <label class="block font-bold mb-1">Descuentos ($)</label>
-            <input type="number" id="payroll-deduction" oninput="calculatePayroll()" class="w-full border rounded-lg p-2">
+            <label class="block font-bold mb-1 text-[11px]">Descuentos / Adelantos ($)</label>
+            <input type="number" step="0.01" id="payroll-deduction" oninput="calculatePayroll()" class="w-full border rounded-lg p-1.5 text-xs">
+          </div>
+          <div>
+            <label class="block font-bold mb-1 text-[11px]">Ajustes de Saldo ($)</label>
+            <input type="number" step="0.01" id="payroll-adjustment" oninput="calculatePayroll()" placeholder="Ej: +/- 10.00" class="w-full border rounded-lg p-1.5 text-xs">
           </div>
         </div>
 
         <div class="flex justify-between items-center pt-2 border-t font-bold text-sm">
-          <span>Total a Pagar Estimado:</span>
-          <span id="payroll-total-display" class="brand-pink">$0.00</span>
+          <span class="text-xs text-slate-600">Total NETO Calculado:</span>
+          <span id="payroll-total-display" class="brand-pink text-base font-black">$0.00</span>
         </div>
       </div>
 
       <div class="flex justify-between gap-2 border-t pt-3">
         <button onclick="printPayrollVoucher()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
-          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante de Pago
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprobante Quincenal
         </button>
-        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">Guardar Cambios de Expediente</button>
+        <button onclick="saveEmployeePayrollDetails()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">Guardar Ficha y Ajustes</button>
       </div>
     </div>
   </div>
@@ -435,12 +467,14 @@
         <p>Fecha: <span id="pay-print-date"></span></p>
         <p>Empleado: <span id="pay-print-name" class="font-bold"></span></p>
         <p>Cargo: <span id="pay-print-role"></span></p>
+        <p>Período: <span id="pay-print-period" class="font-bold"></span></p>
         <p class="text-[9px] text-slate-400">------------------------------------</p>
         <p class="flex justify-between"><span>Días Trabajados:</span><span id="pay-print-days"></span></p>
         <p class="flex justify-between"><span>Tarifa por Día:</span><span id="pay-print-rate"></span></p>
         <p class="flex justify-between"><span>Subtotal Días:</span><span id="pay-print-subtotal"></span></p>
         <p class="flex justify-between text-emerald-600"><span>Bonos / Comisiones:</span><span id="pay-print-bonus"></span></p>
         <p class="flex justify-between text-rose-600"><span>Descuentos / Adelantos:</span><span id="pay-print-deduction"></span></p>
+        <p class="flex justify-between text-blue-600"><span>Ajustes Especiales:</span><span id="pay-print-adjustment"></span></p>
         <p class="text-[9px] text-slate-400">------------------------------------</p>
         <p class="flex justify-between font-bold text-xs"><span>NETO PAGADO:</span><span id="pay-print-total"></span></p>
         
@@ -596,7 +630,7 @@
             <input type="number" step="0.01" id="p-price" class="w-full border rounded-xl p-2.5">
           </div>
           <div>
-            <label class="block font-bold mb-1 text-slate-700">Stock Initial / Actual</label>
+            <label class="block font-bold mb-1 text-slate-700">Stock Inicial / Actual</label>
             <input type="number" id="p-stock" class="w-full border rounded-xl p-2.5">
           </div>
         </div>
@@ -645,12 +679,12 @@
   <script>
     // ⚙️ PEGA TUS CREDENCIALES DE FIREBASE AQUÍ:
     const firebaseConfig = {
-      apiKey: "AIzaSyDsvxQyeG4x4UpAFsQAD8TuqR1xhg8HIoA",
-  authDomain: "lk-smartphones-pos.firebaseapp.com",
-  projectId: "lk-smartphones-pos",
-  storageBucket: "lk-smartphones-pos.firebasestorage.app",
-  messagingSenderId: "942578519902",
-  appId: "1:942578519902:web:e01565a4c46299154189cf"
+      apiKey: "AIzaSy...",
+      authDomain: "tu-proyecto.firebaseapp.com",
+      projectId: "tu-proyecto",
+      storageBucket: "tu-proyecto.appspot.com",
+      messagingSenderId: "123456789...",
+      appId: "1:123456789...:web:..."
     };
 
     // Inicializar Firebase
@@ -725,21 +759,21 @@
 
     function seedDefaultUser() {
       db.collection("users").add({
-        name: 'Ninoska Brito Pineda', 
+        name: 'Cecilyah Brito', 
         email: 'admin@lksmartphone.com', 
-        phone: '(809) 773-8814',
-        address: 'Ramon Matias Mella',
-        emergency: '',
+        phone: '(809) 555-0199',
+        address: 'Calle Principal #12',
+        emergency: 'Alex - (809) 555-0100',
         role: 'Administrador', 
         pin: '9999', 
         joined: '2026-05-10',
         attendance: [],
         idImage: null,
-        dayRate: 50.00, bonus: 0, deduction: 0
+        dayRate: 50.00, bonus: 0, deduction: 0, adjustment: 0
       });
     }
 
-    // AUTENTICACIÓN DIRECTA A SERVIDOR (Resuelve bloqueo en dispositivos nuevos)
+    // AUTENTICACIÓN DIRECTA A SERVIDOR
     async function submitPin() {
       const enteredPin = document.getElementById('pin-input').value.trim();
       if(!enteredPin) return alert('Por favor ingrese su PIN de acceso.');
@@ -818,13 +852,14 @@
     function renderUsers() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
+      const todayStr = new Date().toISOString().split('T')[0];
 
       users.forEach(u => {
         const roleBadge = u.role === 'Administrador' 
           ? 'bg-purple-100 text-purple-800 border-purple-200' 
           : 'bg-blue-100 text-blue-800 border-blue-200';
 
-        const daysWorked = u.attendance ? u.attendance.length : 0;
+        const hasAttendedToday = (u.attendance || []).some(entry => entry.startsWith(todayStr));
 
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50">
@@ -843,8 +878,14 @@
               <span class="px-2 py-0.5 rounded-full border text-[9px] font-bold ${roleBadge}">${u.role}</span>
               <p class="text-[10px] font-mono font-bold text-slate-500 mt-1">PIN: ${u.pin ? '•••• (' + u.pin + ')' : 'Sin PIN'}</p>
             </td>
-            <td class="p-4 text-center font-bold text-emerald-600 text-xs">
-              ${daysWorked} días
+            <td class="p-4 text-center">
+              ${hasAttendedToday ? `
+                <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">✓ Presente</span>
+              ` : `
+                <button onclick="adminMarkPresence('${u.id}')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-lg text-[10px]">
+                  + Marcar Presente
+                </button>
+              `}
             </td>
             <td class="p-4 text-center space-x-1">
               <button onclick="openEmployeeDetail('${u.id}')" class="px-2.5 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg font-bold text-[10px]">
@@ -884,10 +925,21 @@
         joined: new Date().toISOString().split('T')[0],
         attendance: [],
         idImage: null,
-        dayRate: 0, bonus: 0, deduction: 0
+        dayRate: 0, bonus: 0, deduction: 0, adjustment: 0
       });
 
       closeModal('modal-user');
+    }
+
+    function adminMarkPresence(empId) {
+      const userDoc = users.find(u => u.id === empId);
+      if(!userDoc) return;
+
+      const todayStr = new Date().toLocaleString();
+      let updatedAttendance = userDoc.attendance || [];
+      updatedAttendance.push(`${todayStr} (Marcado por Admin)`);
+
+      db.collection("users").doc(empId).update({ attendance: updatedAttendance });
     }
 
     function openEmployeeDetail(empId) {
@@ -909,25 +961,62 @@
         imgContainer.innerHTML = `<span class="text-slate-400">Sin documento subido</span>`;
       }
 
-      const daysCount = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
-      document.getElementById('emp-days-count').innerText = `${daysCount} días registrados`;
-
-      const logContainer = document.getElementById('emp-attendance-log');
-      logContainer.innerHTML = '';
-      if(selectedEmpForDetail.attendance && selectedEmpForDetail.attendance.length > 0) {
-        selectedEmpForDetail.attendance.slice().reverse().forEach(entry => {
-          logContainer.innerHTML += `<p class="text-slate-700">✓ Entró: ${entry}</p>`;
-        });
-      } else {
-        logContainer.innerHTML = `<p class="text-slate-400 italic">Sin registros de entrada</p>`;
-      }
+      renderAttendanceLogs();
 
       document.getElementById('payroll-day-rate').value = selectedEmpForDetail.dayRate || 0;
       document.getElementById('payroll-bonus').value = selectedEmpForDetail.bonus || 0;
       document.getElementById('payroll-deduction').value = selectedEmpForDetail.deduction || 0;
+      document.getElementById('payroll-adjustment').value = selectedEmpForDetail.adjustment || 0;
+      document.getElementById('payroll-quincena-select').value = 'all';
 
       calculatePayroll();
       document.getElementById('modal-employee-detail').classList.remove('hidden');
+    }
+
+    function renderAttendanceLogs() {
+      if(!selectedEmpForDetail) return;
+      const daysCount = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      document.getElementById('emp-days-count').innerText = `${daysCount} días`;
+
+      const logContainer = document.getElementById('emp-attendance-log');
+      logContainer.innerHTML = '';
+      if(selectedEmpForDetail.attendance && selectedEmpForDetail.attendance.length > 0) {
+        selectedEmpForDetail.attendance.slice().reverse().forEach((entry, idx) => {
+          const originalIdx = selectedEmpForDetail.attendance.length - 1 - idx;
+          logContainer.innerHTML += `
+            <div class="flex justify-between items-center text-slate-700">
+              <span>✓ Entró: ${entry}</span>
+              <button onclick="removeAttendanceEntry(${originalIdx})" class="text-rose-500 font-bold hover:underline">✕</button>
+            </div>
+          `;
+        });
+      } else {
+        logContainer.innerHTML = `<p class="text-slate-400 italic">Sin registros de entrada</p>`;
+      }
+    }
+
+    function addManualAttendanceDate() {
+      const dateVal = document.getElementById('manual-attendance-date').value;
+      if(!dateVal || !selectedEmpForDetail) return alert('Seleccione una fecha válida.');
+
+      let updatedAttendance = selectedEmpForDetail.attendance || [];
+      const formattedEntry = `${dateVal} 09:00:00 (Manual)`;
+      updatedAttendance.push(formattedEntry);
+
+      selectedEmpForDetail.attendance = updatedAttendance;
+      db.collection("users").doc(selectedEmpForDetail.id).update({ attendance: updatedAttendance });
+      renderAttendanceLogs();
+      calculatePayroll();
+    }
+
+    function removeAttendanceEntry(index) {
+      if(!selectedEmpForDetail) return;
+      let updatedAttendance = selectedEmpForDetail.attendance || [];
+      updatedAttendance.splice(index, 1);
+      selectedEmpForDetail.attendance = updatedAttendance;
+      db.collection("users").doc(selectedEmpForDetail.id).update({ attendance: updatedAttendance });
+      renderAttendanceLogs();
+      calculatePayroll();
     }
 
     function clearEmpPin() {
@@ -947,14 +1036,33 @@
       reader.readAsDataURL(file);
     }
 
+    function filterAttendanceByQuincena(attendanceList, mode) {
+      if(!attendanceList) return [];
+      if(mode === 'all') return attendanceList;
+
+      return attendanceList.filter(entry => {
+        const parts = entry.split(' ')[0].split('-');
+        if(parts.length >= 3) {
+          const day = parseInt(parts[2], 10);
+          if(mode === 'q1') return day >= 1 && day <= 15;
+          if(mode === 'q2') return day >= 16;
+        }
+        return true;
+      });
+    }
+
     function calculatePayroll() {
       if(!selectedEmpForDetail) return;
-      const days = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
+      const quincenaMode = document.getElementById('payroll-quincena-select').value;
+      const filteredDays = filterAttendanceByQuincena(selectedEmpForDetail.attendance, quincenaMode);
+      
+      const days = filteredDays.length;
       const rate = parseFloat(document.getElementById('payroll-day-rate').value) || 0;
       const bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
       const deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
+      const adjustment = parseFloat(document.getElementById('payroll-adjustment').value) || 0;
 
-      const total = (days * rate) + bonus - deduction;
+      const total = (days * rate) + bonus - deduction + adjustment;
       document.getElementById('payroll-total-display').innerText = `$${total.toFixed(2)}`;
     }
 
@@ -989,31 +1097,41 @@
         pin: newPin || null,
         dayRate: parseFloat(document.getElementById('payroll-day-rate').value) || 0,
         bonus: parseFloat(document.getElementById('payroll-bonus').value) || 0,
-        deduction: parseFloat(document.getElementById('payroll-deduction').value) || 0
+        deduction: parseFloat(document.getElementById('payroll-deduction').value) || 0,
+        adjustment: parseFloat(document.getElementById('payroll-adjustment').value) || 0
       }).then(() => {
         closeModal('modal-employee-detail');
-        alert('¡Ficha del empleado actualizada con éxito en la nube!');
+        alert('¡Ficha y configuración de nómina actualizadas con éxito!');
       });
     }
 
     function printPayrollVoucher() {
       if(!selectedEmpForDetail) return;
 
-      const days = selectedEmpForDetail.attendance ? selectedEmpForDetail.attendance.length : 0;
-      const rate = selectedEmpForDetail.dayRate || 0;
-      const bonus = selectedEmpForDetail.bonus || 0;
-      const deduction = selectedEmpForDetail.deduction || 0;
+      const quincenaMode = document.getElementById('payroll-quincena-select').value;
+      const filteredDays = filterAttendanceByQuincena(selectedEmpForDetail.attendance, quincenaMode);
+
+      const days = filteredDays.length;
+      const rate = parseFloat(document.getElementById('payroll-day-rate').value) || 0;
+      const bonus = parseFloat(document.getElementById('payroll-bonus').value) || 0;
+      const deduction = parseFloat(document.getElementById('payroll-deduction').value) || 0;
+      const adjustment = parseFloat(document.getElementById('payroll-adjustment').value) || 0;
+      
       const subtotalDays = days * rate;
-      const netTotal = subtotalDays + bonus - deduction;
+      const netTotal = subtotalDays + bonus - deduction + adjustment;
+
+      const periodText = quincenaMode === 'q1' ? '1ra Quincena' : (quincenaMode === 'q2' ? '2da Quincena' : 'Período Completo');
 
       document.getElementById('pay-print-date').innerText = new Date().toLocaleDateString();
       document.getElementById('pay-print-name').innerText = selectedEmpForDetail.name;
       document.getElementById('pay-print-role').innerText = selectedEmpForDetail.role;
+      document.getElementById('pay-print-period').innerText = periodText;
       document.getElementById('pay-print-days').innerText = `${days} días`;
       document.getElementById('pay-print-rate').innerText = `$${rate.toFixed(2)}`;
       document.getElementById('pay-print-subtotal').innerText = `$${subtotalDays.toFixed(2)}`;
       document.getElementById('pay-print-bonus').innerText = `+$${bonus.toFixed(2)}`;
       document.getElementById('pay-print-deduction').innerText = `-$${deduction.toFixed(2)}`;
+      document.getElementById('pay-print-adjustment').innerText = `$${adjustment.toFixed(2)}`;
       document.getElementById('pay-print-total').innerText = `$${netTotal.toFixed(2)}`;
 
       document.getElementById('modal-payroll-print').classList.remove('hidden');
