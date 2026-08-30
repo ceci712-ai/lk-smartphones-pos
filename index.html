@@ -363,6 +363,25 @@
   </main>
 
   <!-- MODAL: EXPEDIENTE COMPLETO / EDITABLE / PIN / NÓMINA -->
+  <!-- CONTROL DE ASISTENCIA MANUAL CON SELECCIÓN DE FECHA -->
+<div class="space-y-2 my-2 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
+  <label class="block font-bold text-slate-700 text-[11px]">Añadir Asistencia Pasada / Manual:</label>
+  <div class="flex gap-1.5">
+    <input type="date" id="manual-attendance-date" class="border rounded-lg p-1 text-xs text-slate-800 bg-white flex-1 font-semibold">
+    <button onclick="addPastAttendanceDate()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] shrink-0 transition">
+      + Agregar Día
+    </button>
+  </div>
+  
+  <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+    <button onclick="removeLastAttendance()" class="text-rose-600 hover:text-rose-800 font-bold text-[10px] underline">
+      - Eliminar último registro
+    </button>
+    <button onclick="resetQuincenaAttendance()" class="px-2 py-1 bg-amber-500/20 text-amber-900 border border-amber-400/40 hover:bg-amber-500/30 font-bold rounded-lg text-[10px] transition">
+      🔄 Cerrar / Reiniciar Quincena
+    </button>
+  </div>
+</div>
   <div id="modal-employee-detail" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex justify-between items-center border-b pb-3">
@@ -711,6 +730,54 @@
 
   <!-- JAVASCRIPT DE LA APLICACIÓN -->
   <script>
+    function addPastAttendanceDate() {
+  if (!selectedEmpForDetail) return;
+
+  const dateInput = document.getElementById('manual-attendance-date').value;
+  if (!dateInput) {
+    return alert('Por favor, selecciona una fecha en el calendario.');
+  }
+
+  // Convertir la fecha seleccionada (YYYY-MM-DD) a formato legible
+  const [year, month, day] = dateInput.split('-');
+  const formattedDate = `${day}/${month}/${year}, 08:00:00 a. m. (Manual Pasado)`;
+
+  let updatedAttendance = Array.from(selectedEmpForDetail.attendance || []);
+  
+  // Agregar la fecha a la lista
+  updatedAttendance.push(formattedDate);
+
+  // Ordenar cronológicamente si se desea mantener orden
+  selectedEmpForDetail.attendance = updatedAttendance;
+
+  db.collection("users").doc(selectedEmpForDetail.id).update({ 
+    attendance: updatedAttendance 
+  }).then(() => {
+    document.getElementById('manual-attendance-date').value = '';
+    openEmployeeDetail(selectedEmpForDetail.id); // Refresca el modal y recalcula la nómina
+  }).catch(error => {
+    console.error("Error al añadir fecha pasada:", error);
+    alert("Error al conectar con la nube.");
+  });
+}function resetQuincenaAttendance() {
+  if (!selectedEmpForDetail) return;
+
+  const confirmReset = confirm(`¿Deseas cerrar la quincena de ${selectedEmpForDetail.name} y reiniciar el contador a 0 días?`);
+  
+  if (confirmReset) {
+    selectedEmpForDetail.attendance = [];
+
+    db.collection("users").doc(selectedEmpForDetail.id).update({ 
+      attendance: [] 
+    }).then(() => {
+      openEmployeeDetail(selectedEmpForDetail.id);
+      alert('Quincena cerrada. Contador de días reiniciado a 0.');
+    }).catch(error => {
+      console.error("Error al reiniciar quincena:", error);
+      alert("No se pudo actualizar en la nube.");
+    });
+  }
+}
     async function printReceiptBluetooth() {
   // Comprobar si el navegador soporte Web Bluetooth (Chrome / Edge en Android o PC)
   if (!navigator.bluetooth) {
