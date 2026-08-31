@@ -1,0 +1,25 @@
+/* Estilos personalizados para la marca */
+.brand-pink { 
+  color: #ff007f; 
+}
+
+.bg-brand-pink { 
+  background-color: #ff007f; 
+}
+
+/* Reglas de Impresión para Tickets y Comprobantes */
+@media print {
+  body * { 
+    visibility: hidden; 
+  }
+  #printable-receipt, #printable-receipt *, #printable-payroll, #printable-payroll * { 
+    visibility: visible; 
+  }
+  #printable-receipt, #printable-payroll { 
+    position: absolute; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    font-size: 11px; 
+  }
+}
