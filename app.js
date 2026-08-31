@@ -969,3 +969,41 @@ function saveShiftClosure() {
     alert('Error al guardar el cierre de caja: ' + err);
   });
 }
+// ABRIR FORMULARIO DE REGISTRO DE EMPLEADO
+function openInviteUserModal() {
+  document.getElementById('u-name').value = '';
+  document.getElementById('u-phone').value = '';
+  document.getElementById('u-email').value = '';
+  document.getElementById('u-address').value = '';
+  document.getElementById('u-emergency').value = '';
+  document.getElementById('u-pin').value = '';
+  document.getElementById('modal-user').classList.remove('hidden');
+}
+
+// GUARDAR NUEVO EMPLEADO EN FIRESTORE
+function saveUser() {
+  const name = document.getElementById('u-name').value.trim();
+  const phone = document.getElementById('u-phone').value.trim();
+  const email = document.getElementById('u-email').value.trim();
+  const address = document.getElementById('u-address').value.trim();
+  const emergency = document.getElementById('u-emergency').value.trim();
+  const role = document.getElementById('u-role').value;
+  const pin = document.getElementById('u-pin').value.trim();
+
+  if (!name) return alert('Por favor complete el nombre del empleado.');
+  if (pin && (pin.length !== 4 || isNaN(pin))) return alert('El PIN debe contener 4 números.');
+
+  db.collection("users").add({ 
+    name, phone, email, address, emergency, role, 
+    pin: pin || null, 
+    joined: new Date().toISOString().split('T')[0],
+    attendance: [],
+    idImage: null,
+    dayRate: 0, bonus: 0, deduction: 0
+  }).then(() => {
+    alert('Empleado registrado con éxito.');
+    closeModal('modal-user');
+  }).catch(error => {
+    alert('Error al guardar en la nube: ' + error.message);
+  });
+}
