@@ -75,6 +75,12 @@
         <button onclick="switchTab('pos')" id="nav-pos" class="nav-btn bg-brand-pink text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
           <i data-lucide="shopping-cart" class="w-4 h-4"></i> POS / Ventas
         </button>
+        
+        <!-- Botón Cierre de Caja (solo visible para Admins) -->
+        <button onclick="openShiftCloseModal()" id="nav-shift-close" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+          <i data-lucide="calculator" class="w-4 h-4"></i> Cierre de Caja
+        </button>
+
         <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
           <i data-lucide="package" class="w-4 h-4"></i> Inventario
         </button>
