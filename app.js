@@ -854,3 +854,74 @@ window.onload = function() {
     });
   }
 };
+// FUNCIONES DE ARQUEO Y CIERRE DE CAJA DIARIO
+function openShiftCloseModal() {
+  const todayStr = new Date().toLocaleDateString();
+  const todaySales = sales.filter(s => s.date && s.date.includes(todayStr));
+
+  let cashTotal = 0;
+  let digitalTotal = 0;
+
+  todaySales.forEach(s => {
+    const amount = parseFloat(s.total || 0);
+    if (s.method === 'Efectivo') {
+      cashTotal += amount;
+    } else {
+      digitalTotal += amount;
+    }
+  });
+
+  document.getElementById('shift-cash-system').innerText = `$${cashTotal.toFixed(2)}`;
+  document.getElementById('shift-digital-system').innerText = `$${digitalTotal.toFixed(2)}`;
+  document.getElementById('shift-total-system').innerText = `$${(cashTotal + digitalTotal).toFixed(2)}`;
+
+  document.getElementById('shift-cash-counted').value = '';
+  document.getElementById('shift-difference').innerText = '$0.00';
+  document.getElementById('shift-notes').value = '';
+
+  window.currentShiftData = { cashTotal, digitalTotal, total: cashTotal + digitalTotal };
+  document.getElementById('modal-shift-close').classList.remove('hidden');
+}
+
+function calculateShiftDifference() {
+  const counted = parseFloat(document.getElementById('shift-cash-counted').value) || 0;
+  const expected = window.currentShiftData ? window.currentShiftData.cashTotal : 0;
+  const diff = counted - expected;
+
+  const diffEl = document.getElementById('shift-difference');
+  if (diff === 0) {
+    diffEl.innerText = "$0.00 (Cuadre Perfecto)";
+    diffEl.className = "font-bold text-emerald-600";
+  } else if (diff > 0) {
+    diffEl.innerText = `+$${diff.toFixed(2)} (Sobrante)`;
+    diffEl.className = "font-bold text-blue-600";
+  } else {
+    diffEl.innerText = `-$${Math.abs(diff).toFixed(2)} (Faltante)`;
+    diffEl.className = "font-bold text-rose-600";
+  }
+}
+
+function saveShiftClosure() {
+  const counted = parseFloat(document.getElementById('shift-cash-counted').value);
+  if (isNaN(counted)) return alert('Ingrese el efectivo contado en caja.');
+
+  const notes = document.getElementById('shift-notes').value;
+  const expected = window.currentShiftData ? window.currentShiftData.cashTotal : 0;
+  const difference = counted - expected;
+
+  db.collection("daily_closures").add({
+    date: new Date().toLocaleString(),
+    user: currentUser ? currentUser.name : 'Desconocido',
+    systemCash: expected,
+    systemDigital: window.currentShiftData ? window.currentShiftData.digitalTotal : 0,
+    systemTotal: window.currentShiftData ? window.currentShiftData.total : 0,
+    countedCash: counted,
+    difference: difference,
+    notes: notes
+  }).then(() => {
+    alert('¡Cierre de Caja registrado con éxito en la nube!');
+    closeModal('modal-shift-close');
+  }).catch(err => {
+    alert('Error al guardar el cierre de caja: ' + err);
+  });
+}
