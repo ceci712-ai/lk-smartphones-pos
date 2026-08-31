@@ -133,18 +133,30 @@ function setupUserInterface(name, roleName, badgeClass) {
   badge.innerText = roleName;
   badge.className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeClass}`;
 
+  // RESTRICCIÓN DE ROLES
   if(roleName === 'Empleado') {
+    // Ocultar pestañas y herramientas exclusivas de Administrador
     document.getElementById('nav-dashboard').classList.add('hidden');
+    document.getElementById('nav-inventory').classList.add('hidden'); // Oculta Inventario
+    document.getElementById('nav-shift-close').classList.add('hidden'); // Oculta Cierre de Caja
+    document.getElementById('nav-users').classList.add('hidden'); // Oculta Personal RRHH
     document.getElementById('nav-history').classList.add('hidden');
-    document.getElementById('nav-users').classList.add('hidden');
     document.getElementById('btn-add-product').classList.add('hidden');
+    
+    // Redirigir al POS
     switchTab('pos');
   } else {
+    // Mostrar todo para Administradores
     document.getElementById('nav-dashboard').classList.remove('hidden');
-    document.getElementById('nav-history').classList.remove('hidden');
+    document.getElementById('nav-inventory').classList.remove('hidden');
+    document.getElementById('nav-shift-close').classList.remove('hidden');
     document.getElementById('nav-users').classList.remove('hidden');
+    document.getElementById('nav-history').classList.remove('hidden');
     document.getElementById('btn-add-product').classList.remove('hidden');
+    
     switchTab('dashboard');
+  }
+}
   }
 }
 
