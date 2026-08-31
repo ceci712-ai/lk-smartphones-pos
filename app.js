@@ -70,7 +70,7 @@ function seedDefaultUser() {
     address: 'Calle Principal #12',
     emergency: 'Alex - (809) 555-0100',
     role: 'Administrador', 
-    pin: '9999', 
+    pin: '9888', 
     joined: '2026-05-10',
     attendance: [],
     idImage: null,
@@ -867,6 +867,38 @@ window.onload = function() {
   }
 };
 // FUNCIONES DE ARQUEO Y CIERRE DE CAJA DIARIO
+function openShiftCloseModal() {
+  // Verificar si el usuario actual es Administrador
+  if (!currentUser || currentUser.role !== 'Administrador') {
+    return alert('Acceso denegado. Solo los Administradores pueden realizar el Cierre de Caja.');
+  }
+
+  const todayStr = new Date().toLocaleDateString();
+  const todaySales = sales.filter(s => s.date && s.date.includes(todayStr));
+
+  let cashTotal = 0;
+  let digitalTotal = 0;
+
+  todaySales.forEach(s => {
+    const amount = parseFloat(s.total || 0);
+    if (s.method === 'Efectivo') {
+      cashTotal += amount;
+    } else {
+      digitalTotal += amount;
+    }
+  });
+
+  document.getElementById('shift-cash-system').innerText = `$${cashTotal.toFixed(2)}`;
+  document.getElementById('shift-digital-system').innerText = `$${digitalTotal.toFixed(2)}`;
+  document.getElementById('shift-total-system').innerText = `$${(cashTotal + digitalTotal).toFixed(2)}`;
+
+  document.getElementById('shift-cash-counted').value = '';
+  document.getElementById('shift-difference').innerText = '$0.00';
+  document.getElementById('shift-notes').value = '';
+
+  window.currentShiftData = { cashTotal, digitalTotal, total: cashTotal + digitalTotal };
+  document.getElementById('modal-shift-close').classList.remove('hidden');
+}
 function openShiftCloseModal() {
   const todayStr = new Date().toLocaleDateString();
   const todaySales = sales.filter(s => s.date && s.date.includes(todayStr));
