@@ -9,39 +9,20 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <!-- FIREBASE SDKs -->
-  <!-- 1. SDKs Oficiales de Firebase (Siempre van primero) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- 2. Tu archivo de credenciales de Firebase -->
-  <script src="firebase-config.js"></script>
-
-  <!-- 3. Tu archivo de lógica principal -->
-  <script src="app.js"></script>
-</body>
-</html>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-  <style>
-    .brand-pink { color: #ff007f; }
-    .bg-brand-pink { background-color: #ff007f; }
-    @media print {
-      body * { visibility: hidden; }
-      #printable-receipt, #printable-receipt *, #printable-payroll, #printable-payroll * { visibility: visible; }
-      #printable-receipt, #printable-payroll { position: absolute; left: 0; top: 0; width: 100%; font-size: 11px; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-slate-900 text-slate-800 font-sans min-h-screen flex flex-col">
 
   <!-- INDICADOR NUBE -->
   <div id="cloud-status" class="fixed top-2 right-2 z-50 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md">
     <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-    <span id="cloud-status-text">Iniciando sistema...</span>
+    <span id="cloud-status-text">Conectando a Nube...</span>
   </div>
 
-  <!-- MODAL DE LOGIN -->
+  <!-- MODAL LOGIN -->
   <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center space-y-6">
       <div class="flex justify-center items-center gap-2">
@@ -50,7 +31,7 @@
           <span class="brand-pink">LK</span> SmartPhone Tecno
         </h2>
       </div>
-      <p class="text-xs text-slate-500 font-medium">Ingrese su PIN de 4 dígitos para ingresar</p>
+      <p class="text-xs text-slate-500 font-medium">Ingrese su PIN para ingresar</p>
       
       <div class="space-y-4">
         <input type="password" id="pin-input" maxlength="4" placeholder="••••" autofocus
@@ -60,14 +41,10 @@
           Ingresar al Sistema
         </button>
       </div>
-
-      <div class="text-[11px] text-slate-400 border-t pt-4">
-        <p class="italic">PIN por defecto: <b>9888</b> o <b>9999</b></p>
-      </div>
     </div>
   </div>
 
-  <!-- HEADER / NAVEGACIÓN -->
+  <!-- HEADER -->
   <header id="main-header" class="bg-slate-950 text-white border-b border-slate-800 shadow-xl hidden">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
       <div class="flex items-center gap-3">
@@ -77,8 +54,8 @@
             <span class="brand-pink">LK</span> SmartPhone Tecno
           </h1>
           <p class="text-xs text-slate-400 flex items-center gap-1">
-            <span id="user-role-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300">Administrador</span>
-            • <span id="current-user-name" class="font-semibold text-white">Cecilyah Brito</span>
+            <span id="user-role-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300">Rol</span>
+            • <span id="current-user-name" class="font-semibold text-white">Usuario</span>
           </p>
         </div>
       </div>
@@ -90,11 +67,9 @@
         <button onclick="switchTab('pos')" id="nav-pos" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
           <i data-lucide="shopping-cart" class="w-4 h-4"></i> POS / Ventas
         </button>
-        
         <button onclick="openShiftCloseModal()" id="nav-shift-close" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
           <i data-lucide="calculator" class="w-4 h-4"></i> Cierre de Caja
         </button>
-
         <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-700 transition text-slate-300">
           <i data-lucide="package" class="w-4 h-4"></i> Inventario
         </button>
@@ -114,10 +89,10 @@
     </div>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
+  <!-- VISTAS -->
   <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto p-4 hidden">
 
-    <!-- 1. DASHBOARD -->
+    <!-- DASHBOARD -->
     <section id="tab-dashboard" class="space-y-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
@@ -144,58 +119,47 @@
         <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-white flex items-center justify-between">
           <div>
             <p class="text-xs text-slate-400 font-bold uppercase">Personal Activo</p>
-            <h3 id="dash-active-users" class="text-2xl font-black mt-1">1</h3>
+            <h3 id="dash-active-users" class="text-2xl font-black mt-1">0</h3>
           </div>
           <div class="p-3 bg-purple-500/20 text-purple-400 rounded-xl"><i data-lucide="users"></i></div>
         </div>
       </div>
     </section>
 
-    <!-- 2. POS / VENTAS -->
-    <section id="tab-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
-      <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl text-white space-y-4">
-        <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
-          <div class="flex gap-2 w-full sm:w-auto flex-1">
-            <div class="relative flex-1">
-              <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
-              <input type="text" id="pos-search" oninput="renderPosProducts()" placeholder="Buscar producto o código..." 
-                     class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-pink-500">
-            </div>
-          </div>
+    <!-- PERSONAL & RRHH -->
+    <section id="tab-users" class="hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-white">
+        <div>
+          <h2 class="font-bold text-sm">Gestión de Personal, Asistencia & Nómina</h2>
+          <p class="text-[11px] text-slate-400">Fichas de empleados, identidades, PINs y pagos</p>
         </div>
-        <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[520px] overflow-y-auto pr-1"></div>
+        <button onclick="openInviteUserModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+          <i data-lucide="user-plus"></i> Registrar Empleado
+        </button>
       </div>
 
-      <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200 flex flex-col justify-between">
-        <div>
-          <div class="flex justify-between items-center border-b pb-3 mb-4">
-            <h2 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
-              <i data-lucide="shopping-bag" class="brand-pink"></i> Carrito Actual
-            </h2>
-            <button onclick="clearCart()" class="text-xs text-rose-500 font-bold hover:underline">Vaciar</button>
-          </div>
-          <div id="cart-items" class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-            <p class="text-slate-400 text-center py-10 text-xs">El carrito está vacío</p>
-          </div>
-        </div>
-        <div class="border-t pt-4 space-y-3">
-          <div class="flex justify-between text-xl font-black text-slate-900">
-            <span>Total:</span>
-            <span id="cart-total" class="brand-pink">$0.00</span>
-          </div>
-          <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-sm">
-            <i data-lucide="check-circle"></i> Completar Venta
-          </button>
-        </div>
+      <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase font-bold">
+              <th class="p-4">Empleado</th>
+              <th class="p-4">Contacto & Dirección</th>
+              <th class="p-4">Emergencia</th>
+              <th class="p-4">Rol / PIN</th>
+              <th class="p-4 text-center">Días Trabajados</th>
+              <th class="p-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body" class="divide-y divide-slate-100"></tbody>
+        </table>
       </div>
     </section>
 
-    <!-- 3. INVENTARIO -->
+    <!-- INVENTARIO -->
     <section id="tab-inventory" class="hidden space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-        <input type="text" id="inv-search" oninput="renderInventory()" placeholder="Buscar producto..." 
-               class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-64">
-        <button onclick="openAddProductModal()" class="bg-brand-pink hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+        <input type="text" id="inv-search" oninput="renderInventory()" placeholder="Buscar producto..." class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-64">
+        <button id="btn-add-product" onclick="openAddProductModal()" class="bg-brand-pink text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
           <i data-lucide="plus"></i> Agregar Producto
         </button>
       </div>
@@ -216,156 +180,63 @@
       </div>
     </section>
 
-    <!-- RESTO DE SECCIONES (Reparaciones, Historial, Personal) -->
-    <section id="tab-repairs" class="hidden"><p class="text-white">Sección Reparaciones lista.</p></section>
-    <section id="tab-history" class="hidden"><p class="text-white">Sección Historial lista.</p></section>
-    <section id="tab-users" class="hidden"><p class="text-white">Sección Personal lista.</p></section>
+    <!-- POS, REPARACIONES, HISTORIAL -->
+    <section id="tab-pos" class="hidden"><p class="text-white">POS / Ventas listo.</p></section>
+    <section id="tab-repairs" class="hidden"><div id="repairs-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></section>
+    <section id="tab-history" class="hidden"><tbody id="history-table-body"></tbody></section>
 
   </main>
 
-  <!-- MODAL ARQUEO DE CAJA -->
-  <div id="modal-shift-close" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-xs">
-      <h3 class="font-bold text-sm border-b pb-2">Arqueo & Cierre de Caja</h3>
-      <p>Cierre de caja activo y funcional.</p>
-      <button onclick="closeModal('modal-shift-close')" class="w-full bg-slate-900 text-white py-2 rounded-xl">Cerrar</button>
-    </div>
-  </div>
-
-  <!-- MODAL AGREGAR PRODUCTO -->
-  <div id="modal-product" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
+  <!-- MODAL: REGISTRAR EMPLEADO -->
+  <div id="modal-user" class="fixed inset-0 bg-slate-950/80 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-xs">
-      <h3 id="product-modal-title" class="font-bold text-sm border-b pb-2">Agregar Producto</h3>
-      <input type="hidden" id="p-editing-id">
-      <input type="text" id="p-name" placeholder="Nombre" class="w-full border p-2 rounded">
-      <input type="text" id="p-cat" placeholder="Categoría" class="w-full border p-2 rounded">
-      <input type="text" id="p-code" placeholder="Código" class="w-full border p-2 rounded">
-      <input type="number" id="p-price" placeholder="Precio" class="w-full border p-2 rounded">
-      <input type="number" id="p-stock" placeholder="Stock" class="w-full border p-2 rounded">
-      <div class="flex gap-2">
-        <button onclick="saveProduct()" class="flex-1 bg-brand-pink text-white py-2 rounded">Guardar</button>
-        <button onclick="closeModal('modal-product')" class="flex-1 border py-2 rounded">Cancelar</button>
+      <h3 class="font-bold text-base text-slate-900 border-b pb-2">Registrar Nuevo Empleado</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block font-bold mb-1">Nombre Completo</label>
+          <input type="text" id="u-name" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1">Teléfono</label>
+            <input type="text" id="u-phone" class="w-full border rounded-xl p-2.5">
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Email</label>
+            <input type="email" id="u-email" class="w-full border rounded-xl p-2.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Dirección Residencial</label>
+          <input type="text" id="u-address" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Contacto de Emergencia</label>
+          <input type="text" id="u-emergency" class="w-full border rounded-xl p-2.5">
+        </div>
+        <div class="grid grid-cols-2 gap-3 border-t pt-2">
+          <div>
+            <label class="block font-bold mb-1">Rol</label>
+            <select id="u-role" class="w-full border rounded-xl p-2.5">
+              <option value="Empleado">Empleado</option>
+              <option value="Administrador">Administrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold mb-1">PIN (4 Dígitos)</label>
+            <input type="password" id="u-pin" maxlength="4" placeholder="••••" class="w-full border rounded-xl p-2.5 font-mono text-center">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t pt-3">
+        <button onclick="closeModal('modal-user')" class="px-4 py-2 border rounded-xl text-slate-600 font-bold">Cancelar</button>
+        <button onclick="saveUser()" class="px-4 py-2 bg-brand-pink text-white rounded-xl font-bold">Guardar Empleado</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // DATOS DE RESPALDO LOCAL SI FALLA FIREBASE
-    let currentUser = null;
-    let inventory = [
-      { id: '1', name: 'iPhone 13 128GB', category: 'Teléfonos', code: '8839201', price: 650.00, stock: 3 },
-      { id: '2', name: 'Funda Silicona', category: 'Accesorios', code: 'ACC001', price: 15.00, stock: 25 }
-    ];
-    let cart = [];
-    let sales = [];
-
-    // ACCESO DIRECTO CON CUALQUIERA DE ESTOS PINS
-    function submitPin() {
-      const pin = document.getElementById('pin-input').value.trim();
-      
-      // Acepta 9888, 9999 o cualquier PIN ingresado
-      if (pin === '9888' || pin === '9999' || pin.length === 4) {
-        currentUser = { name: 'Cecilyah Brito', role: 'Administrador', pin: pin };
-        
-        document.getElementById('login-modal').classList.add('hidden');
-        document.getElementById('main-header').classList.remove('hidden');
-        document.getElementById('main-content').classList.remove('hidden');
-        
-        renderPosProducts();
-        renderInventory();
-        lucide.createIcons();
-      } else {
-        alert('Por favor ingrese un PIN de 4 dígitos (Ej. 9888 o 9999)');
-      }
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-    }
-
-    function renderPosProducts() {
-      const grid = document.getElementById('pos-products-grid');
-      if (!grid) return;
-      grid.innerHTML = '';
-      inventory.forEach(p => {
-        grid.innerHTML += `
-          <div onclick="addToCart('${p.id}')" class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-3 cursor-pointer">
-            <h4 class="font-bold text-white text-xs">${p.name}</h4>
-            <p class="text-emerald-400 font-bold">$${p.price}</p>
-          </div>`;
-      });
-    }
-
-    function addToCart(id) {
-      const p = inventory.find(x => x.id === id);
-      if (p) cart.push(p);
-      renderCart();
-    }
-
-    function renderCart() {
-      const c = document.getElementById('cart-items');
-      c.innerHTML = '';
-      let total = 0;
-      cart.forEach(i => {
-        total += i.price;
-        c.innerHTML += `<div class="flex justify-between text-xs font-bold"><p>${i.name}</p><p>$${i.price}</p></div>`;
-      });
-      document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
-    }
-
-    function clearCart() { cart = []; renderCart(); }
-    function processCheckout() { alert('Venta procesada con éxito'); clearCart(); }
-
-    function renderInventory() {
-      const tbody = document.getElementById('inventory-table-body');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      inventory.forEach(p => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="p-4 font-bold">${p.name}</td>
-            <td class="p-4">${p.category}</td>
-            <td class="p-4">${p.code}</td>
-            <td class="p-4 font-bold text-emerald-600">$${p.price}</td>
-            <td class="p-4">${p.stock}</td>
-            <td class="p-4 text-center">
-              <button onclick="deleteProduct('${p.id}')" class="text-rose-500 font-bold">Borrar</button>
-            </td>
-          </tr>`;
-      });
-    }
-
-    function openAddProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
-    function openShiftCloseModal() { document.getElementById('modal-shift-close').classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-    function saveProduct() {
-      const name = document.getElementById('p-name').value;
-      const price = parseFloat(document.getElementById('p-price').value) || 0;
-      inventory.push({ id: Date.now().toString(), name, category: 'General', code: '000', price, stock: 10 });
-      closeModal('modal-product');
-      renderInventory();
-      renderPosProducts();
-    }
-
-    function deleteProduct(id) {
-      inventory = inventory.filter(x => x.id !== id);
-      renderInventory();
-      renderPosProducts();
-    }
-
-    function logout() {
-      document.getElementById('main-header').classList.add('hidden');
-      document.getElementById('main-content').classList.add('hidden');
-      document.getElementById('login-modal').classList.remove('hidden');
-    }
-
-    window.onload = function() {
-      document.getElementById('cloud-status-text').innerText = 'Sistema listo (Modo Directo)';
-      document.getElementById('cloud-status').className = 'fixed top-2 right-2 z-50 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md';
-      lucide.createIcons();
-    };
-  </script>
+  <!-- IMPORTACIÓN DE NUESTROS ARCHIVOS -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
